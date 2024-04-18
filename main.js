@@ -29,14 +29,13 @@ class Grid {
       alert("Canvas is not supported");
     }
     this.ctx = this.cv.getContext("2d");
-    this.ctx.lineWidth = 3;
-    this.ctx.strokeStyle = "red";
+    this.ctx.fillStyle = appConfig.style.note.defaultColor;
     this.cvWidth = this.cv.width;
     this.cvHeight = this.cv.height;
 
     this.indicatorCtx = document.getElementById("indicator").getContext("2d");
-    this.indicatorCtx.lineWidth = 3;
-    this.indicatorCtx.strokeStyle = "blue";
+    this.indicatorCtx.lineWidth = appConfig.style.grid.indicator.width;
+    this.indicatorCtx.strokeStyle = appConfig.style.grid.indicator.color;
 
     this.staticCtx = document.getElementById("staticGrid").getContext("2d");
     this.drawStatic();
@@ -85,20 +84,19 @@ class Grid {
   }
 
   drawStatic() {
-    // draw border
-    this.staticCtx.lineWidth = 3;
-    this.staticCtx.strokeStyle = "#333";
-    this.staticCtx.strokeRect(0, 0, this.cvWidth, this.cvHeight);
+    // Background
+    this.staticCtx.fillStyle = appConfig.style.background;
+    this.staticCtx.fillRect(0, 0, this.cvWidth, this.cvHeight);
 
     // draw beat indicator
     const pxBetweenBeats = this.cvWidth / this.beatsCount;
     for (let i = 1; i < this.beatsCount; i++) {
       const x = i * pxBetweenBeats;
-      this.staticCtx.lineWidth = 1;
-      this.staticCtx.strokeStyle = "#888";
+      this.staticCtx.lineWidth = appConfig.style.grid.beat.width;
+      this.staticCtx.strokeStyle = appConfig.style.grid.beat.color;
       if (i % 4 === 0) {
-        this.staticCtx.lineWidth = 4;
-        this.staticCtx.strokeStyle = "#333";
+        this.staticCtx.lineWidth = appConfig.style.grid.measure.width;
+        this.staticCtx.strokeStyle = appConfig.style.grid.measure.color;
       }
       this.staticCtx.beginPath();
       this.staticCtx.moveTo(x, 0);
@@ -134,13 +132,14 @@ class Grid {
 
   renderNote(note, currentTime) {
     // Render
-    const paddingTop = 40;
-    const startY = paddingTop + 20 * (note.note.charCodeAt(0) - 65); // "A"
-    const endY = startY + 20;
+    const noteConfig = new Note(note.note);
+    const startY = noteConfig.y;
+    const endY = startY + appConfig.style.note.height;
+    this.gridCtx.fillStyle = noteConfig.color;
 
     if (note.startTime >= this.canvasStartTime) {
       // Note is in between canvas start & indicator
-      this.strokeRectTime(
+      this.renderNoteTime(
         this.gridCtx,
         note.startTime,
         Math.min(note.endTime, currentTime),
@@ -149,7 +148,7 @@ class Grid {
     } else if (note.startTime < this.canvasStartTime && note.endTime <= this.canvasStartTime) {
       // Note is in between indicator & canvas end. Simplify by adding
       // canvasTotal time to the note, rendering like it is in the future.
-      this.strokeRectTime(
+      this.renderNoteTime(
         this.gridCtx,
         Math.max(note.startTime + this.canvasTotalTime, currentTime),
         note.endTime + this.canvasTotalTime,
@@ -157,13 +156,13 @@ class Grid {
         endY);
     } else if (note.startTime < this.canvasStartTime && note.endTime > this.canvasStartTime) {
       // Note is split in between
-      this.strokeRectTime(
+      this.renderNoteTime(
         this.gridCtx,
         Math.max(note.startTime + this.canvasTotalTime, currentTime),
         this.canvasEndTime,
         startY,
         endY);
-      this.strokeRectTime(
+      this.renderNoteTime(
         this.gridCtx,
         this.canvasStartTime,
         currentTime < note.endTime ? Math.max(note.endTime, currentTime) : Math.min(note.endTime, currentTime),
@@ -175,16 +174,14 @@ class Grid {
   }
 
   // Draw rectangles by converting start & end time against canvas start time.
-  strokeRectTime(ctx, startTime, endTime, startY, endY) {
+  renderNoteTime(ctx, startTime, endTime, startY, endY) {
     const startX = (startTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     const endX = (endTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
-    this.strokeRect(ctx, startX, startY, endX, endY);
-  }
-
-  strokeRect(ctx, startX, startY, endX, endY) {
     const width = endX - startX;
     const height = endY - startY;
-    ctx.strokeRect(startX, startY, width, height);
+    ctx.beginPath();
+    ctx.roundRect(startX, startY, width, height, [4]);
+    ctx.fill();
   }
 
   drawIndicator(currentTime) {
@@ -243,78 +240,6 @@ class UI {
   }
 }
 
-// TODO: implement a linked list queue.
-// For now, since the number of notes is small, a list should be sufficient.
-// Notes are sorted in timestamp order. New notes should be appended at the end.
-class NoteQueue {
-  constructor() {
-    this.notesArr = [];
-    this.firstAvailableNoteIndex = -1;
-  }
-
-  add(note, startTime) {
-    if (this.notesArr.length === 0) {
-      this.firstAvailableNoteIndex = 0;
-    }
-    this.notesArr.push({
-      note: note,
-      startTime: startTime,
-      endTime: startTime + 100, // ms
-      visible: true
-    });
-  }
-
-  reset() {
-    this.notesArr = [];
-    this.firstAvailableNoteIndex = -1;
-  }
-
-  isEmpty() {
-    return this.notesArr.length === 0 || this.firstAvailableNoteIndex === -1
-      || this.firstAvailableNoteIndex >= this.notesArr.length;
-  }
-
-  get notes() {
-    // Returning an iterator while the list is copied/truncated may cause a
-    // problem. Thus we return a new sublist.
-    if (this.isEmpty()) {
-      return [];
-    }
-    return this.notesArr.slice(this.firstAvailableNoteIndex);
-  }
-
-  removeNotesBeforeTime(currentTime, canvasTotalTime) {
-    // Internally, hide notes first. Once they've accumulated above a certain
-    // threshold, copy the new notes to a new list.
-    if (this.isEmpty()) {
-      return;
-    }
-
-    const horizon = currentTime - canvasTotalTime;
-    for (let i = this.firstAvailableNoteIndex; i < this.notesArr.length; i++) {
-      const note = this.notesArr[i];
-      if (note.visible && note.endTime <= horizon) {
-        note.visible = false;
-        this.firstAvailableNoteIndex += 1;
-        if (this.firstAvailableNoteIndex >= this.notesArr.length) {
-          this.firstAvailableNoteIndex = -1;
-        }
-      } else {
-        break;
-      }
-    }
-    // All notes are hidden.
-    if (this.firstAvailableNoteIndex === -1) {
-      this.notesArr = [];
-    }
-    // Copy new visible notes.
-    if (this.firstAvailableNoteIndex >= 100) {
-      this.notesArr = this.notesArr.slice(this.firstAvailableNoteIndex);
-      this.firstAvailableNoteIndex = 0;
-    }
-  }
-}
-
 class App {
   constructor(ui, grid, noteQueue, metronome) {
     this.ui = ui;
@@ -362,13 +287,14 @@ class App {
 
   registerMidiHandler() {
     this.inputs.forEach(i => {
-      if (i.channels[1].hasListener()) {
-        i.channels[1].removeListener();
+      if (i.channels[10].hasListener()) {
+        i.channels[10].removeListener();
       }
     });
-    this.input.channels[1].addListener("noteon", e => {
-      console.log(`Note ${e.note.name} at timestamp ${e.timestamp}`);
-      this.noteQ.add(e.note.name, e.timestamp);
+    this.input.channels[10].addListener("noteon", e => {
+      const noteName = e.note.name + (e.note.accidental === undefined ? "" : "#");
+      console.log(`Note ${noteName} at timestamp ${e.timestamp}`);
+      this.noteQ.add(e.note, e.timestamp);
       dbg.event = e;
     });
   }
