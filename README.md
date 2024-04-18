@@ -9,11 +9,12 @@ audio and visual feedback when practicing.
 ## TODO
 
 - [x] Connect to MIDI device and log notes
+- [x] Draw canvas and real time moving indicator
 - [ ] Map notes to drum piece
 - [ ] Draw note with SVG on a canvas
-- [ ] Real time moving indicator
 - [ ] Sync tempo with external MIDI device
 
 ## References
 
 - [MDN Web MIDI API](https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API)
+- https://github.com/scottwhudson/metronome

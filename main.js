@@ -1,6 +1,95 @@
 // Debug object for inspecting in the console.
 var dbg = {};
 const d = document;
+const animateForever = true;
+
+// assuming a 4/4 time, 2 measures = 8 beats.
+// 9 lines, beginning + 7 separating lines + end line
+const tempo = 90;
+const msPerBeat = 60 * 1000 / tempo;
+const beatsCount = 4;
+const canvasTotalTime = msPerBeat * beatsCount; // diff between start and end
+// if 8 beats have passed, the new start time is the previous end time.
+
+class Grid {
+  constructor() {
+    this.cv = document.getElementById("grid");
+    if (!this.cv.getContext) {
+      alert("Canvas is not supported");
+    }
+    this.ctx = this.cv.getContext("2d");
+    this.ctx.lineWidth = 3;
+    this.ctx.strokeStyle = "blue";
+    this.cvWidth = this.cv.width;
+    this.cvHeight = this.cv.height;
+
+    this.staticCv = document.getElementById("staticGrid");
+    this.staticCtx = this.staticCv.getContext("2d");
+    this.drawStatic();
+
+    this.calculateCanvasStartEndTime(true);
+  }
+
+  get canvasEndTime() {
+    return this.canvasStartTime + canvasTotalTime;
+  }
+
+  drawStatic() {
+    // draw border
+    this.staticCtx.lineWidth = 3;
+    this.staticCtx.strokeStyle = "black";
+    this.staticCtx.strokeRect(0, 0, this.cvWidth, this.cvHeight);
+
+    // draw beat indicator
+    const pxBetweenBeats = this.cvWidth / beatsCount;
+    for (let i = 1; i < beatsCount; i++) {
+      const x = i * pxBetweenBeats;
+      this.staticCtx.lineWidth = 1;
+      this.staticCtx.beginPath();
+      this.staticCtx.moveTo(x, 0);
+      this.staticCtx.lineTo(x, this.cvHeight);
+      this.staticCtx.stroke();
+    }
+  }
+
+  draw() {
+    this.animate(0);
+  }
+
+  animate(timestamp) {
+    this.ctx.clearRect(0, 0, this.cvWidth, this.cvHeight);
+    this.drawIndicator(timestamp);
+    if (!animateForever && performance.now() >= 10 * 1000) {
+      return;
+    }
+    requestAnimationFrame(this.animate.bind(this));
+  }
+
+  drawIndicator(timestamp) {
+    this.calculateCanvasStartEndTime(false);
+    // timestamp: DOMHighResTimeStamp in ms
+    // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
+
+    const x = (timestamp - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, 0);
+    this.ctx.lineTo(x, this.cvHeight);
+    this.ctx.stroke();
+  }
+
+  calculateCanvasStartEndTime(init) {
+    if (init) {
+      this.canvasStartTime = performance.now();
+      // console.log(`Canvas from time ${this.canvasStartTime} to ${this.canvasEndTime}`);
+      return;
+    }
+    if (performance.now() >= this.canvasEndTime) {
+      const times = Math.floor((performance.now() - this.canvasEndTime) / canvasTotalTime);
+      this.canvasStartTime = this.canvasStartTime + (times + 1) * canvasTotalTime;
+      // console.log(`Canvas from time ${this.canvasStartTime} to ${this.canvasEndTime}`);
+    }
+  }
+}
 
 class UI {
   constructor() {
@@ -39,8 +128,9 @@ class UI {
 }
 
 class App {
-  constructor(ui) {
+  constructor(ui, grid) {
     this.ui = ui;
+    this.grid = grid;
     this.inputs;
     this.selectedInput;
   }
@@ -112,10 +202,13 @@ class App {
 function main() {
   console.log("main");
   const ui = new UI();
-  const app = new App(ui);
+  const grid = new Grid();
+  const app = new App(ui, grid);
+  grid.draw();
   app.onMidiReady();
   dbg.ui = ui;
   dbg.app = app;
+  dbg.grid = grid;
 }
 
 window.onload = function() {
