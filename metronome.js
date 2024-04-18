@@ -81,18 +81,22 @@ class Metronome {
     }
   }
 
-  toggle() {
-    this.isPlaying = !this.isPlaying;
+  sync() {
+    this.nextNoteTime = this.audioContext.currentTime;
+    this.currentTwelveletNote = 0;
+  }
 
-    if (this.isPlaying) {
-      this.currentTwelveletNote = 0;
-      this.nextNoteTime = this.audioContext.currentTime;
-      this.timerWorker.postMessage("start");
-      document.getElementById("playButton").textContent = "Stop";
-    } else {
-      this.timerWorker.postMessage("stop");
-      document.getElementById("playButton").textContent = "Play";
-    }
+  start() {
+    this.isPlaying = true;
+
+    this.currentTwelveletNote = 0;
+    this.nextNoteTime = this.audioContext.currentTime;
+    this.timerWorker.postMessage("start");
+  }
+
+  stop() {
+    this.isPlaying = false;
+    this.timerWorker.postMessage("stop");
   }
 
   init() {

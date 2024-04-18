@@ -3,6 +3,8 @@ var dbg = {};
 const d = document;
 const animateForever = true;
 
+const maxSyncDelay = 20; // ms
+
 // assuming a 4/4 time, 2 measures = 8 beats.
 // 9 lines, beginning + 7 separating lines + end line
 const tempo = 90;
@@ -23,6 +25,7 @@ function checkState(bool, message) {
 
 class Grid {
   constructor(noteQueue) {
+    this.isPlaying = false;
     this.noteQ = noteQueue;
 
     this.cv = document.getElementById("grid");
@@ -53,6 +56,25 @@ class Grid {
     return this.canvasStartTime + canvasTotalTime;
   }
 
+  start() {
+    this.isPlaying = true;
+    this.canvasStartTime = performance.now();
+    this.calculateCanvasStartEndTime(true);
+    this.animate(this.canvasStartTime);
+  }
+
+  stop() {
+    this.isPlaying = false;
+  }
+
+  registerSyncCallback(callback) {
+    this.syncCallback = callback;
+  }
+
+  sync() {
+    this.calculateCanvasStartEndTime(true);
+  }
+
   drawStatic() {
     // draw border
     this.staticCtx.lineWidth = 3;
@@ -76,10 +98,6 @@ class Grid {
     }
   }
 
-  draw() {
-    this.animate(0);
-  }
-
   animate(currentTime) {
     // currentTime: DOMHighResTimeStamp in ms
     // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
@@ -94,7 +112,9 @@ class Grid {
     if (!animateForever && performance.now() >= 10 * 1000) {
       return;
     }
-    requestAnimationFrame(this.animate.bind(this));
+    if (this.isPlaying) {
+      requestAnimationFrame(this.animate.bind(this));
+    }
   }
 
   drawNotes(currentTime) {
@@ -286,12 +306,15 @@ class NoteQueue {
 }
 
 class App {
-  constructor(ui, grid, noteQueue) {
+  constructor(ui, grid, noteQueue, metronome) {
     this.ui = ui;
     this.grid = grid;
     this.inputs;
     this.selectedInput;
     this.noteQ = noteQueue;
+    this.metronome = metronome;
+    this.isPlaying = false;
+    this.grid.registerSyncCallback(() => { metronome.sync(); });
   }
 
   // onMidiDeviceSelected(selection) {
@@ -357,6 +380,22 @@ class App {
       dbg.event = e;
     });
   }
+
+  toggle() {
+    this.isPlaying = !this.isPlaying;
+    if (this.isPlaying) {
+      this.metronome.start();
+      this.grid.start();
+    } else {
+      this.metronome.stop();
+      this.grid.stop();
+    }
+  }
+
+  sync() {
+    this.grid.sync();
+    this.metronome.sync();
+  }
 }
 
 function main() {
@@ -364,14 +403,17 @@ function main() {
   const noteQueue = new NoteQueue();
   const ui = new UI();
   const grid = new Grid(noteQueue);
-  const app = new App(ui, grid, noteQueue);
   const metronome = new Metronome();
+  const app = new App(ui, grid, noteQueue, metronome);
+
   metronome.init();
-  grid.draw();
   app.onMidiReady();
 
   document.getElementById("playButton").onclick = () => {
-    metronome.toggle();
+    app.toggle();
+  };
+  document.getElementById("sync").onclick = () => {
+    app.sync();
   };
 
   dbg.ui = ui;
