@@ -365,8 +365,15 @@ function main() {
   const ui = new UI();
   const grid = new Grid(noteQueue);
   const app = new App(ui, grid, noteQueue);
+  const metronome = new Metronome();
+  metronome.init();
   grid.draw();
   app.onMidiReady();
+
+  document.getElementById("playButton").onclick = () => {
+    metronome.toggle();
+  };
+
   dbg.ui = ui;
   dbg.app = app;
   dbg.grid = grid;
