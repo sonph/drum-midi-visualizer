@@ -56,7 +56,7 @@ class Grid {
   drawStatic() {
     // draw border
     this.staticCtx.lineWidth = 3;
-    this.staticCtx.strokeStyle = "black";
+    this.staticCtx.strokeStyle = "#333";
     this.staticCtx.strokeRect(0, 0, this.cvWidth, this.cvHeight);
 
     // draw beat indicator
@@ -64,6 +64,11 @@ class Grid {
     for (let i = 1; i < beatsCount; i++) {
       const x = i * pxBetweenBeats;
       this.staticCtx.lineWidth = 1;
+      this.staticCtx.strokeStyle = "#888";
+      if (i % 4 === 0) {
+        this.staticCtx.lineWidth = 4;
+        this.staticCtx.strokeStyle = "#333";
+      }
       this.staticCtx.beginPath();
       this.staticCtx.moveTo(x, 0);
       this.staticCtx.lineTo(x, this.cvHeight);
