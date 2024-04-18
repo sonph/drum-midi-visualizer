@@ -99,6 +99,19 @@ class Metronome {
     this.timerWorker.postMessage("stop");
   }
 
+  setTempo(tempo) {
+    console.log(`Metronome setting tempo to ${tempo}`);
+    this.tempo = tempo;
+  }
+
+  soundOff() {
+    this.masterVolume = 0;
+  }
+
+  soundOn() {
+    this.masterVolume = 0.5;
+  }
+
   init() {
     console.log("metronome init");
     this.audioContext = new AudioContext();

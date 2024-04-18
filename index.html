@@ -10,7 +10,7 @@
   </head>
   
   <body>
-    <form>
+    <div>
       <label for="deviceSelect">Input device:</label>
       <select id="deviceSelect">
         <option value="defaultOption">
@@ -19,7 +19,9 @@
       </select>
       <button type="button" id="playButton">Play/Stop</button>
       <button type="button" id="sync">Sync</button>
-    </form>
+      <label for="tempo">Tempo:</label>
+      <input type="number" id="tempo" placeholder="90">
+    </div>
     <br>
     <div style="position: relative;">
       <canvas id="staticGrid" width="1000" height="500"

@@ -1,21 +1,6 @@
 // Debug object for inspecting in the console.
 var dbg = {};
 const d = document;
-const animateForever = true;
-
-const maxSyncDelay = 20; // ms
-
-// assuming a 4/4 time, 2 measures = 8 beats.
-// 9 lines, beginning + 7 separating lines + end line
-const tempo = 90;
-const msPerBeat = 60 * 1000 / tempo;
-const beatsCount = 8;
-const canvasTotalTime = msPerBeat * beatsCount; // diff between start and end
-// if 8 beats have passed, the new start time is the previous end time.
-
-// Notes are rendered as a block, not a point.
-// TODO: support variable note length with instruments such as a piano.
-const noteLength = 100; // ms
 
 function checkState(bool, message) {
   if (!bool) {
@@ -27,6 +12,17 @@ class Grid {
   constructor(noteQueue) {
     this.isPlaying = false;
     this.noteQ = noteQueue;
+
+    this.beatsCount = 8;
+    // Notes are rendered as a block, not a point.
+    // TODO: support variable note length with instruments such as a piano.
+    this.noteLength = 100; // ms
+
+    this.tempo;
+    this.canvasTotalTime;
+    this.setTempo(90);
+
+    this.showIndicator = true;
 
     this.cv = document.getElementById("grid");
     if (!this.cv.getContext) {
@@ -53,10 +49,19 @@ class Grid {
   }
 
   get canvasEndTime() {
-    return this.canvasStartTime + canvasTotalTime;
+    return this.canvasStartTime + this.canvasTotalTime;
+  }
+
+  indicatorOff() {
+    this.showIndicator = false;
+  }
+
+  indicatorOn() {
+    this.showIndicator = true;
   }
 
   start() {
+    console.log("Grid starting");
     this.isPlaying = true;
     this.canvasStartTime = performance.now();
     this.calculateCanvasStartEndTime(true);
@@ -64,11 +69,15 @@ class Grid {
   }
 
   stop() {
+    console.log("Grid stopping");
     this.isPlaying = false;
   }
 
-  registerSyncCallback(callback) {
-    this.syncCallback = callback;
+  setTempo(tempo) {
+    console.log(`Grid setting tempo to ${tempo}`);
+    this.tempo = tempo;
+    const msPerBeat = 60 * 1000 / this.tempo;
+    this.canvasTotalTime = msPerBeat * this.beatsCount; // diff between start and end
   }
 
   sync() {
@@ -82,8 +91,8 @@ class Grid {
     this.staticCtx.strokeRect(0, 0, this.cvWidth, this.cvHeight);
 
     // draw beat indicator
-    const pxBetweenBeats = this.cvWidth / beatsCount;
-    for (let i = 1; i < beatsCount; i++) {
+    const pxBetweenBeats = this.cvWidth / this.beatsCount;
+    for (let i = 1; i < this.beatsCount; i++) {
       const x = i * pxBetweenBeats;
       this.staticCtx.lineWidth = 1;
       this.staticCtx.strokeStyle = "#888";
@@ -104,14 +113,12 @@ class Grid {
     this.calculateCanvasStartEndTime(false);
 
     this.indicatorCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
-    this.drawIndicator(currentTime);
+    if (this.showIndicator) {
+      this.drawIndicator(currentTime);
+    }
 
     this.drawNotes(currentTime);
 
-    // Killswitch
-    if (!animateForever && performance.now() >= 10 * 1000) {
-      return;
-    }
     if (this.isPlaying) {
       requestAnimationFrame(this.animate.bind(this));
     }
@@ -121,7 +128,7 @@ class Grid {
     // TODO: Maybe optimize by checking if there are notes to hide first.
     this.gridCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
 
-    this.noteQ.removeNotesBeforeTime(currentTime);
+    this.noteQ.removeNotesBeforeTime(currentTime, this.canvasTotalTime);
     this.noteQ.notes.forEach(note => this.renderNote(note, currentTime));
   }
 
@@ -144,15 +151,15 @@ class Grid {
       // canvasTotal time to the note, rendering like it is in the future.
       this.strokeRectTime(
         this.gridCtx,
-        Math.max(note.startTime + canvasTotalTime, currentTime),
-        note.endTime + canvasTotalTime,
+        Math.max(note.startTime + this.canvasTotalTime, currentTime),
+        note.endTime + this.canvasTotalTime,
         startY,
         endY);
     } else if (note.startTime < this.canvasStartTime && note.endTime > this.canvasStartTime) {
       // Note is split in between
       this.strokeRectTime(
         this.gridCtx,
-        Math.max(note.startTime + canvasTotalTime, currentTime),
+        Math.max(note.startTime + this.canvasTotalTime, currentTime),
         this.canvasEndTime,
         startY,
         endY);
@@ -169,8 +176,8 @@ class Grid {
 
   // Draw rectangles by converting start & end time against canvas start time.
   strokeRectTime(ctx, startTime, endTime, startY, endY) {
-    const startX = (startTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
-    const endX = (endTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    const startX = (startTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
+    const endX = (endTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     this.strokeRect(ctx, startX, startY, endX, endY);
   }
 
@@ -181,7 +188,7 @@ class Grid {
   }
 
   drawIndicator(currentTime) {
-    const x = (currentTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    const x = (currentTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     this.indicatorCtx.beginPath();
     this.indicatorCtx.moveTo(x, 0);
     this.indicatorCtx.lineTo(x, this.cvHeight);
@@ -191,13 +198,11 @@ class Grid {
   calculateCanvasStartEndTime(init) {
     if (init) {
       this.canvasStartTime = performance.now();
-      // console.log(`Canvas from time ${this.canvasStartTime} to ${this.canvasEndTime}`);
       return;
     }
     if (performance.now() >= this.canvasEndTime) {
-      const times = Math.floor((performance.now() - this.canvasEndTime) / canvasTotalTime);
-      this.canvasStartTime = this.canvasStartTime + (times + 1) * canvasTotalTime;
-      // console.log(`Canvas from time ${this.canvasStartTime} to ${this.canvasEndTime}`);
+      const times = Math.floor((performance.now() - this.canvasEndTime) / this.canvasTotalTime);
+      this.canvasStartTime = this.canvasStartTime + (times + 1) * this.canvasTotalTime;
     }
   }
 }
@@ -254,9 +259,14 @@ class NoteQueue {
     this.notesArr.push({
       note: note,
       startTime: startTime,
-      endTime: startTime + noteLength,
+      endTime: startTime + 100, // ms
       visible: true
     });
+  }
+
+  reset() {
+    this.notesArr = [];
+    this.firstAvailableNoteIndex = -1;
   }
 
   isEmpty() {
@@ -273,7 +283,7 @@ class NoteQueue {
     return this.notesArr.slice(this.firstAvailableNoteIndex);
   }
 
-  removeNotesBeforeTime(currentTime) {
+  removeNotesBeforeTime(currentTime, canvasTotalTime) {
     // Internally, hide notes first. Once they've accumulated above a certain
     // threshold, copy the new notes to a new list.
     if (this.isEmpty()) {
@@ -314,25 +324,7 @@ class App {
     this.noteQ = noteQueue;
     this.metronome = metronome;
     this.isPlaying = false;
-    this.grid.registerSyncCallback(() => { metronome.sync(); });
   }
-
-  // onMidiDeviceSelected(selection) {
-  //   if (this.selectedInputDevice) {
-  //     this.selectedInputDevice.close();
-  //   }
-  //   const selectedInputDeviceId = selection.target.value;
-  //   console.log('Input port', selectedInputDeviceId);
-  //   this.selectedInputDevice = this.inputDevicesList.get(selectedInputDeviceId);
-  //   this.selectedInputDevice.onmidimessage = this.handleMIDIMessage.bind(this);
-  // }
-  // handleMIDIMessage(event) {
-  //   const [action, keyId, velocity] = event.data;
-  //   console.log([action, keyId, velocity]);
-  //   if (action === 144) {
-  //     // a method to change the body's background color on each key press, not related to Web MIDI
-  //   }
-  // }
 
   // Function triggered when WEBMIDI.js is ready
   onMidiReady() {
@@ -382,10 +374,24 @@ class App {
   }
 
   toggle() {
+    // Start the metronome and grid in silent/invisible mode, then send a sync
+    // signal so they are in sync.
+    this.metronome.soundOff();
+    this.grid.indicatorOff();
+
     this.isPlaying = !this.isPlaying;
     if (this.isPlaying) {
       this.metronome.start();
       this.grid.start();
+
+      // Enable sound and indicator.
+      setTimeout(() => {
+        this.metronome.soundOn();
+      }, 100);
+      setTimeout(() => {
+        this.sync();
+        this.grid.indicatorOn();
+      }, 300);
     } else {
       this.metronome.stop();
       this.grid.stop();
@@ -395,6 +401,20 @@ class App {
   sync() {
     this.grid.sync();
     this.metronome.sync();
+    this.noteQ.reset();
+  }
+
+  setTempo(tempoStr) {
+    const currentlyPlaying = this.isPlaying;
+    if (currentlyPlaying) {
+      this.toggle();
+    }
+    const tempo = parseInt(tempoStr);
+    this.grid.setTempo(tempo);
+    this.metronome.setTempo(tempo);
+    if (currentlyPlaying) {
+      this.toggle();
+    }
   }
 }
 
@@ -415,6 +435,12 @@ function main() {
   document.getElementById("sync").onclick = () => {
     app.sync();
   };
+  const tempoE = document.getElementById("tempo");
+  tempoE.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+      app.setTempo(tempoE.value);
+    }
+  });
 
   dbg.ui = ui;
   dbg.app = app;
