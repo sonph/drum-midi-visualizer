@@ -10,8 +10,8 @@ audio and visual feedback when practicing.
 
 - [x] Connect to MIDI device and log notes
 - [x] Draw canvas and real time moving indicator
+- [x] Draw notes on a canvas
 - [ ] Map notes to drum piece
-- [ ] Draw note with SVG on a canvas
 - [ ] Sync tempo with external MIDI device
 
 ## References

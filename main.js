@@ -7,25 +7,44 @@ const animateForever = true;
 // 9 lines, beginning + 7 separating lines + end line
 const tempo = 90;
 const msPerBeat = 60 * 1000 / tempo;
-const beatsCount = 4;
+const beatsCount = 8;
 const canvasTotalTime = msPerBeat * beatsCount; // diff between start and end
 // if 8 beats have passed, the new start time is the previous end time.
 
+// Notes are rendered as a block, not a point.
+// TODO: support variable note length with instruments such as a piano.
+const noteLength = 100; // ms
+
+function checkState(bool, message) {
+  if (!bool) {
+    console.log(message);
+  }
+}
+
 class Grid {
-  constructor() {
+  constructor(noteQueue) {
+    this.noteQ = noteQueue;
+
     this.cv = document.getElementById("grid");
     if (!this.cv.getContext) {
       alert("Canvas is not supported");
     }
     this.ctx = this.cv.getContext("2d");
     this.ctx.lineWidth = 3;
-    this.ctx.strokeStyle = "blue";
+    this.ctx.strokeStyle = "red";
     this.cvWidth = this.cv.width;
     this.cvHeight = this.cv.height;
 
-    this.staticCv = document.getElementById("staticGrid");
-    this.staticCtx = this.staticCv.getContext("2d");
+    this.indicatorCtx = document.getElementById("indicator").getContext("2d");
+    this.indicatorCtx.lineWidth = 3;
+    this.indicatorCtx.strokeStyle = "blue";
+
+    this.staticCtx = document.getElementById("staticGrid").getContext("2d");
     this.drawStatic();
+
+    this.gridCtx = document.getElementById("grid").getContext("2d");
+    this.gridCtx.lineWidth = 4;
+    this.gridCtx.strokeStyle = "red";
 
     this.calculateCanvasStartEndTime(true);
   }
@@ -56,25 +75,92 @@ class Grid {
     this.animate(0);
   }
 
-  animate(timestamp) {
-    this.ctx.clearRect(0, 0, this.cvWidth, this.cvHeight);
-    this.drawIndicator(timestamp);
+  animate(currentTime) {
+    // currentTime: DOMHighResTimeStamp in ms
+    // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
+    this.calculateCanvasStartEndTime(false);
+
+    this.indicatorCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
+    this.drawIndicator(currentTime);
+
+    this.drawNotes(currentTime);
+
+    // Killswitch
     if (!animateForever && performance.now() >= 10 * 1000) {
       return;
     }
     requestAnimationFrame(this.animate.bind(this));
   }
 
-  drawIndicator(timestamp) {
-    this.calculateCanvasStartEndTime(false);
-    // timestamp: DOMHighResTimeStamp in ms
-    // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
+  drawNotes(currentTime) {
+    // TODO: Maybe optimize by checking if there are notes to hide first.
+    this.gridCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
 
-    const x = (timestamp - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, 0);
-    this.ctx.lineTo(x, this.cvHeight);
-    this.ctx.stroke();
+    this.noteQ.removeNotesBeforeTime(currentTime);
+    this.noteQ.notes.forEach(note => this.renderNote(note, currentTime));
+  }
+
+  renderNote(note, currentTime) {
+    // Render
+    const paddingTop = 40;
+    const startY = paddingTop + 20 * (note.note.charCodeAt(0) - 65); // "A"
+    const endY = startY + 20;
+
+    if (note.startTime >= this.canvasStartTime) {
+      // Note is in between canvas start & indicator
+      this.strokeRectTime(
+        this.gridCtx,
+        note.startTime,
+        Math.min(note.endTime, currentTime),
+        startY,
+        endY);
+    } else if (note.startTime < this.canvasStartTime && note.endTime <= this.canvasStartTime) {
+      // Note is in between indicator & canvas end. Simplify by adding
+      // canvasTotal time to the note, rendering like it is in the future.
+      this.strokeRectTime(
+        this.gridCtx,
+        Math.max(note.startTime + canvasTotalTime, currentTime),
+        note.endTime + canvasTotalTime,
+        startY,
+        endY);
+    } else if (note.startTime < this.canvasStartTime && note.endTime > this.canvasStartTime) {
+      // Note is split in between
+      this.strokeRectTime(
+        this.gridCtx,
+        Math.max(note.startTime + canvasTotalTime, currentTime),
+        this.canvasEndTime,
+        startY,
+        endY);
+      this.strokeRectTime(
+        this.gridCtx,
+        this.canvasStartTime,
+        currentTime < note.endTime ? Math.max(note.endTime, currentTime) : Math.min(note.endTime, currentTime),
+        startY,
+        endY);
+    } else {
+      console.log(`Unhandled case: note(${note.startTime}, ${note.endTime}) and canvas ${this.canvasStartTime}`);
+    }
+  }
+
+  // Draw rectangles by converting start & end time against canvas start time.
+  strokeRectTime(ctx, startTime, endTime, startY, endY) {
+    const startX = (startTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    const endX = (endTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    this.strokeRect(ctx, startX, startY, endX, endY);
+  }
+
+  strokeRect(ctx, startX, startY, endX, endY) {
+    const width = endX - startX;
+    const height = endY - startY;
+    ctx.strokeRect(startX, startY, width, height);
+  }
+
+  drawIndicator(currentTime) {
+    const x = (currentTime - this.canvasStartTime) / canvasTotalTime * this.cvWidth;
+    this.indicatorCtx.beginPath();
+    this.indicatorCtx.moveTo(x, 0);
+    this.indicatorCtx.lineTo(x, this.cvHeight);
+    this.indicatorCtx.stroke();
   }
 
   calculateCanvasStartEndTime(init) {
@@ -127,12 +213,80 @@ class UI {
   }
 }
 
+// TODO: implement a linked list queue.
+// For now, since the number of notes is small, a list should be sufficient.
+// Notes are sorted in timestamp order. New notes should be appended at the end.
+class NoteQueue {
+  constructor() {
+    this.notesArr = [];
+    this.firstAvailableNoteIndex = -1;
+  }
+
+  add(note, startTime) {
+    if (this.notesArr.length === 0) {
+      this.firstAvailableNoteIndex = 0;
+    }
+    this.notesArr.push({
+      note: note,
+      startTime: startTime,
+      endTime: startTime + noteLength,
+      visible: true
+    });
+  }
+
+  isEmpty() {
+    return this.notesArr.length === 0 || this.firstAvailableNoteIndex === -1
+      || this.firstAvailableNoteIndex >= this.notesArr.length;
+  }
+
+  get notes() {
+    // Returning an iterator while the list is copied/truncated may cause a
+    // problem. Thus we return a new sublist.
+    if (this.isEmpty()) {
+      return [];
+    }
+    return this.notesArr.slice(this.firstAvailableNoteIndex);
+  }
+
+  removeNotesBeforeTime(currentTime) {
+    // Internally, hide notes first. Once they've accumulated above a certain
+    // threshold, copy the new notes to a new list.
+    if (this.isEmpty()) {
+      return;
+    }
+
+    const horizon = currentTime - canvasTotalTime;
+    for (let i = this.firstAvailableNoteIndex; i < this.notesArr.length; i++) {
+      const note = this.notesArr[i];
+      if (note.visible && note.endTime <= horizon) {
+        note.visible = false;
+        this.firstAvailableNoteIndex += 1;
+        if (this.firstAvailableNoteIndex >= this.notesArr.length) {
+          this.firstAvailableNoteIndex = -1;
+        }
+      } else {
+        break;
+      }
+    }
+    // All notes are hidden.
+    if (this.firstAvailableNoteIndex === -1) {
+      this.notesArr = [];
+    }
+    // Copy new visible notes.
+    if (this.firstAvailableNoteIndex >= 100) {
+      this.notesArr = this.notesArr.slice(this.firstAvailableNoteIndex);
+      this.firstAvailableNoteIndex = 0;
+    }
+  }
+}
+
 class App {
-  constructor(ui, grid) {
+  constructor(ui, grid, noteQueue) {
     this.ui = ui;
     this.grid = grid;
     this.inputs;
     this.selectedInput;
+    this.noteQ = noteQueue;
   }
 
   // onMidiDeviceSelected(selection) {
@@ -194,6 +348,7 @@ class App {
     });
     this.input.channels[1].addListener("noteon", e => {
       console.log(`Note ${e.note.name} at timestamp ${e.timestamp}`);
+      this.noteQ.add(e.note.name, e.timestamp);
       dbg.event = e;
     });
   }
@@ -201,17 +356,19 @@ class App {
 
 function main() {
   console.log("main");
+  const noteQueue = new NoteQueue();
   const ui = new UI();
-  const grid = new Grid();
-  const app = new App(ui, grid);
+  const grid = new Grid(noteQueue);
+  const app = new App(ui, grid, noteQueue);
   grid.draw();
   app.onMidiReady();
   dbg.ui = ui;
   dbg.app = app;
   dbg.grid = grid;
+  dbg.noteQ = noteQueue;
 }
 
-window.onload = function() {
+window.onload = function () {
   WebMidi
     .enable()
     .then(main)
