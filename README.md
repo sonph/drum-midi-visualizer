@@ -13,6 +13,10 @@ audio and visual feedback when practicing.
 - [x] Draw notes on a canvas
 - [x] Map notes to drum piece
 - [ ] Sync tempo with external MIDI device
+- [ ] Make metronome subdivisions configurable
+- [ ] Make canvas subdivisions configurable
+- [ ] Make canvas length (# of measures) configurable
+- [ ] Make canvas resizable
 
 ## References
 
