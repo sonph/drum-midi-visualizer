@@ -13,7 +13,7 @@ feedback in addition to audible feedback from the metronome.
 - [x] Draw canvas and real time moving indicator
 - [x] Draw notes on a canvas
 - [x] Map notes to drum piece
-- [ ] Add keyboard shortcuts
+- [x] Add keyboard shortcuts (Space to start/stop, hjkl to adjust tempo)
 - [ ] Make canvas subdivisions configurable
 - [ ] Make canvas length (# of measures) configurable
 - [ ] "Mapping mode" to register MIDI notes against a particular drum piece

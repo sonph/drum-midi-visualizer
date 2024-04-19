@@ -328,6 +328,7 @@ class App {
     } else {
       this.metronome.stop();
       this.grid.stop();
+      this.noteQ.reset();
     }
   }
 
@@ -350,6 +351,10 @@ class App {
     if (currentlyPlaying) {
       this.toggle();
     }
+  }
+
+  changeTempo(amount) {
+    this.setTempo(this.getUiTempo() + amount);
   }
 
   getUiTempo() {
@@ -411,6 +416,22 @@ function main() {
   const app = new App(grid, noteQueue, metronome);
   app.registerUiCallbacks();
   app.onMidiReady();
+
+  // For some reason .toggle() is not recognized when placed in registerUiCallbacks();
+  window.addEventListener("keydown", function (event) {
+    if (event.code === "Space" || event.key === " ") {
+      console.log("Space key pressed!");
+      app.toggle();
+    } else if (event.code === "KeyJ" || event.key === "j") {
+      app.changeTempo(-1);
+    } else if (event.code === "KeyK" || event.key === "k") {
+      app.changeTempo(1);
+    } else if (event.code === "KeyH" || event.key === "h") {
+      app.changeTempo(-5);
+    } else if (event.code === "KeyL" || event.key === "l") {
+      app.changeTempo(5);
+    }
+  });
 }
 
 window.onload = function () {
