@@ -67,8 +67,21 @@ class Grid {
   setTempo(tempo) {
     console.log(`Grid setting tempo to ${tempo}`);
     this.tempo = tempo;
-    const msPerBeat = 60 * 1000 / this.tempo;
-    this.canvasTotalTime = msPerBeat * this.measures * this.meter; // diff between start and end
+    this.calculateCanvasTotalTime();
+  }
+
+  setMeasures(measures) {
+    checkNumber(measures);
+    this.measures = measures;
+    this.calculateCanvasTotalTime();
+    this.drawStatic();
+  }
+
+  setMeter(meter) {
+    checkNumber(meter);
+    this.meter = meter;
+    this.calculateCanvasTotalTime();
+    this.drawStatic();
   }
 
   setSubdivision(subdivision) {
@@ -103,18 +116,20 @@ class Grid {
     // Draw vertical subdivision indicators
     const subCount = this.measures * this.subdivision;
     const subWidth = this.cvWidth / (subCount);
-    for (let i = 1; i < subCount; i++) {
-      const x = i * subWidth;
+    for (let i = 0; i < subCount; i++) {
+      var x =  i * subWidth;
       this.staticCtx.lineWidth = appConfig.style.grid.subdivision.width;
       this.staticCtx.strokeStyle = appConfig.style.grid.subdivision.color;
+      if (i % (this.subdivision / this.meter) === 0) {
+        // Beat
+        this.staticCtx.lineWidth = appConfig.style.grid.beat.width;
+        this.staticCtx.strokeStyle = appConfig.style.grid.beat.color;
+      }
       if (i % this.subdivision === 0) {
         // Measure
         this.staticCtx.lineWidth = appConfig.style.grid.measure.width;
         this.staticCtx.strokeStyle = appConfig.style.grid.measure.color;
-      } else if (i % (this.subdivision / this.meter) === 0) {
-        // Beat
-        this.staticCtx.lineWidth = appConfig.style.grid.beat.width;
-        this.staticCtx.strokeStyle = appConfig.style.grid.beat.color;
+        x += appConfig.style.grid.measure.width / 2;
       }
       this.staticCtx.beginPath();
       this.staticCtx.moveTo(x, 0);
@@ -220,6 +235,11 @@ class Grid {
       this.canvasStartTime = this.canvasStartTime + (times + 1) * this.canvasTotalTime;
     }
   }
+
+  calculateCanvasTotalTime() {
+    const msPerBeat = 60 * 1000 / this.tempo;
+    this.canvasTotalTime = msPerBeat * this.measures * this.meter; // diff between start and end
+  }
 }
 
 class App {
@@ -238,8 +258,10 @@ class App {
     this.uiChannelSelectE = document.getElementById("channelSelect");
     this.uiTempoE = document.getElementById("tempo");
     this.metronomeSubE = document.getElementById("metronomeSubdivision");
-    this.noteLengthE = document.getElementById("noteWidth");
+    this.gridMeasuresE = document.getElementById("measures");
+    this.gridMeterE = document.getElementById("meter");
     this.gridSubE = document.getElementById("gridSubdivision");
+    this.noteLengthE = document.getElementById("noteWidth");
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
@@ -321,11 +343,13 @@ class App {
   toggle() {
     // Start the metronome and grid in silent/invisible mode, then send a sync
     // signal so they are in sync.
+    const playButtonE = document.getElementById("playButton");
     this.metronome.soundOff();
     this.grid.indicatorOff();
 
     this.isPlaying = !this.isPlaying;
     if (this.isPlaying) {
+      playButtonE.textContent = "Stop";
       this.metronome.start();
       this.grid.start();
 
@@ -338,6 +362,7 @@ class App {
         this.grid.indicatorOn();
       }, 300);
     } else {
+        playButtonE.textContent = "Play";
       this.metronome.stop();
       this.grid.stop();
       this.noteQ.reset();
@@ -393,14 +418,8 @@ class App {
     document.getElementById("tempoDec10").onclick = () => {
       this.setTempo(this.getUiTempo() - 10);
     };
-    const playButtonE = document.getElementById("playButton");
-    playButtonE.onclick = () => {
+    document.getElementById("playButton").onclick = () => {
       this.toggle();
-      if (this.isPlaying) {
-        playButtonE.textContent = "Stop";
-      } else {
-        playButtonE.textContent = "Play";
-      }
     };
     document.getElementById("sync").onclick = () => {
       this.sync();
@@ -412,17 +431,23 @@ class App {
       }
     });
 
+    this.gridMeasuresE.onchange = () => {
+      this.grid.setMeasures(parseInt(this.gridMeasuresE.value));
+    };
+    this.gridMeterE.onchange = () => {
+      const meter = parseInt(this.gridMeterE.value);
+      this.grid.setMeter(meter);
+      this.metronome.setMeter(meter);
+    };
+    this.gridSubE.onchange = () => {
+      this.grid.setSubdivision(parseInt(this.gridSubE.value));
+    };
     this.noteLengthE.onchange = () => {
       this.noteLength = 1 / parseInt(this.noteLengthE.value);
     };
-
-    this.gridSubE.onchange = () => {
-      this.grid.setSubdivision(parseInt(this.gridSubE.value));
-    }
-    
     this.metronomeSubE.onchange= () => {
       this.metronome.setSubdivision(parseInt(this.metronomeSubE.value));
-    }
+    };
   }
 }
 

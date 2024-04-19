@@ -99,6 +99,11 @@ class Metronome {
     this.timerWorker.postMessage("stop");
   }
 
+  setMeter(meter) {
+    checkNumber(meter);
+    this.meter = meter;
+  }
+
   setSubdivision(sub) {
     checkNumber(sub);
     this.quarterVolume = 0;

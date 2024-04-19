@@ -16,7 +16,7 @@ feedback in addition to audible feedback from the metronome.
 - [x] Add keyboard shortcuts (Space to start/stop, hjkl to adjust tempo)
 - [x] Make canvas subdivisions configurable (quarter, 8th, 8th triplets, 16th)
 - [x] Make metronome subdivisions configurable
-- [ ] Make number of measures and number of beats configurable
+- [x] Make number of measures and number of beats configurable
 - [ ] "Mapping" or "learning" mode to register MIDI notes against a particular drum piece
 - [ ] Make canvas resizable
 - [ ] Draw notes to reflect variations (dynamic, open hats, cross-stick)

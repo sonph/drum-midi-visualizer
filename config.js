@@ -7,7 +7,7 @@ const appConfig = {
     grid: {
       measure: {
         width: 4,
-        color: "#eee",
+        color: "#939CF2",
       },
       beat: {
         width: 2,
