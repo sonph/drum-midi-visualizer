@@ -48,15 +48,22 @@
       <button type="button" id="tempoInc10">+10</button>
       <button type="button" id="tempoInc5">+5</button>
       <button type="button" id="tempoInc1">+1</button>
+
+      <label for="noteWidth">Note length:</label>
+      <select id="noteWidth">
+        <option value="8">1/8th</option>
+        <option value="16" selected>1/16th</option>
+        <option value="32">1/32nd</option>
+      </select>
     </div>
     <hr>
     <br>
     <div style="position: relative;">
-      <canvas id="staticGrid" width="1000" height="500"
+      <canvas id="staticGrid" width="1200" height="700"
         style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-      <canvas id="indicator" width="1000" height="500" 
+      <canvas id="indicator" width="1200" height="700" 
         style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
-      <canvas id="grid" width="1000" height="500" 
+      <canvas id="grid" width="1200" height="700" 
         style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>
      </div>
     <script src="monkeypatch.js"></script>

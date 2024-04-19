@@ -81,7 +81,22 @@ class Grid {
     this.staticCtx.fillStyle = appConfig.style.background;
     this.staticCtx.fillRect(0, 0, this.cvWidth, this.cvHeight);
 
-    // draw beat indicator
+    // Draw lanes background
+    const lanesCount = Utils.getLanesCount();
+    console.log(`Max ${lanesCount} lanes`);
+    const laneHeight = appConfig.style.note.height + 2 * (appConfig.style.note.spacing / 2);
+    const laneTopPx = appConfig.style.grid.paddingTop - appConfig.style.note.spacing / 2;
+    for (let i = 0; i < lanesCount; i++) {
+      console.log(`Drawing lane ${i}`)
+      if (i % 2 === 0) {
+        this.staticCtx.fillStyle = appConfig.style.evenLaneBackground;
+      } else {
+        this.staticCtx.fillStyle = appConfig.style.oddLaneBackground;
+      }
+      this.staticCtx.fillRect(0, laneTopPx + i * laneHeight, this.cvWidth, laneHeight);
+    }
+
+    // Draw vertical beat indicators
     const pxBetweenBeats = this.cvWidth / this.beatsCount;
     for (let i = 1; i < this.beatsCount; i++) {
       const x = i * pxBetweenBeats;
@@ -206,11 +221,13 @@ class App {
     this.noteQ = noteQueue;
     this.metronome = metronome;
     this.isPlaying = false;
+    this.noteLength = 1/16;
 
     // UI stuff
     this.uiDeviceSelectE = document.getElementById("deviceSelect");
     this.uiChannelSelectE = document.getElementById("channelSelect");
     this.uiTempoE = document.getElementById("tempo");
+    this.noteLengthE = document.getElementById("noteWidth");
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
@@ -276,7 +293,10 @@ class App {
     const noteCallback = (e) => {
       const noteName = e.note.name + (e.note.accidental === undefined ? "" : "#");
       console.log(`Note ${noteName} at timestamp ${e.timestamp}`);
-      this.noteQ.add(e.note, e.timestamp);
+      // Make the note smaller (* 0.8) to reduce overlap.
+      const msPerBeat = 60 * 1000 / this.getUiTempo();
+      const noteLength = 0.8 * (4 * msPerBeat) * this.noteLength;
+      this.noteQ.add(e.note, e.timestamp, e.timestamp + noteLength);
       dbg.event = e;
     };
     if (this.selectedChannel === 0) {
@@ -374,6 +394,10 @@ class App {
         this.setTempo(this.getUiTempo());
       }
     });
+
+    this.noteLengthE.onchange = () => {
+      this.noteLength = 1 / parseInt(this.noteLengthE.value);
+    };
   }
 }
 

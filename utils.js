@@ -7,14 +7,14 @@ class NoteQueue {
     this.firstAvailableNoteIndex = -1;
   }
 
-  add(note, startTime) {
+  add(note, startTime, endTime) {
     if (this.notesArr.length === 0) {
       this.firstAvailableNoteIndex = 0;
     }
     this.notesArr.push({
       note: note,
       startTime: startTime,
-      endTime: startTime + appConfig.style.note.width, // millis
+      endTime: endTime,
       visible: true
     });
   }
@@ -106,6 +106,21 @@ class Note {
       return appConfig.style.note.defaultColor;
     }
     return this.piece.color;
+  }
+}
+
+class Utils {
+  // Determine the number of lanes from the largest piece position.
+  // This will be used for drawing alternating background for lanes.
+  static getLanesCount() {
+    var maxPosition = 0;
+    for (const pieceName in appConfig.noteMapping) {
+      const position = appConfig.noteMapping[pieceName].position;
+      if (maxPosition < position) {
+        maxPosition = position;
+      }
+    }
+    return maxPosition;
   }
 }
 

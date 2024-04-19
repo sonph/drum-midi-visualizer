@@ -2,6 +2,8 @@ const appConfig = {
   defaultTempo: 90,
   style: {
     background: "#333",
+    oddLaneBackground: "#333",
+    evenLaneBackground: "#555",
     grid: {
       beat: {
         width: 1,
@@ -16,55 +18,55 @@ const appConfig = {
         color: "#ede637",
       },
       spacing: 20, // between vertical lines
-      paddingTop: 40,
+      paddingTop: 100,
     },
     note: {
       height: 20,
-      width: 100, // millis
-      spacing: 10, // vertical spacing
+      spacing: 40, // vertical spacing
       defaultColor: "#ddd",
     },
   },
   noteMapping: {
+    // Lane/position 1 for unknown notes.
     splash: {
       notes: ["F1"],
-      position: 1,
+      position: 2,
       color: "#7EB234",
     },
     crash: {
       notes: ["F5"],
-      position: 1,
+      position: 2,
       color: "#7EB234",
     },
     ride: {
       notes: [],
-      position: 1,
+      position: 3,
       color: "#7EB234",
     },
     hats: {
       notes: ["C3", "C#3", "D3", "D#3", "E3", "F#3", "G3"],
-      position: 2,
+      position: 3,
       color: "#F8CC42",
     },
     tom1: {
       notes: ["A4", "B4", "C5"],
-      position: 3,
-      color: "#42C0F7",
+      position: 4,
+      color: "#93d6f2",
     },
     snare: {
       notes: ["C#2", "D2", "D#2", "E2", "F#2"],
-      position: 4,
-      color: "#F74242",
+      position: 5,
+      color: "#f66b6b",
     },
     tom2: {
       notes: [],
-      position: 5,
-      color: "#42C0F7",
+      position: 6,
+      color: "#93d6f2",
     },
     bass: {
       notes: ["C2"],
-      position: 6,
-      color: "#8823D3",
+      position: 7,
+      color: "#cf92fc",
     },
   }
 }
