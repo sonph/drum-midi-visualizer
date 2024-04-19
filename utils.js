@@ -117,6 +117,6 @@ function checkState(bool, message) {
 
 function checkNumber(x) {
   if (isNaN(x)) {
-    console.log(`${typeof x} ${x} is not a number`);
+    console.log(`'${typeof x} ${x}' is not a number or NaN`);
   }
 }

@@ -202,12 +202,14 @@ class App {
     this.grid = grid;
     this.inputs;
     this.selectedInput;
+    this.selectedChannel = 0; // 0 means all
     this.noteQ = noteQueue;
     this.metronome = metronome;
     this.isPlaying = false;
 
     // UI stuff
     this.uiDeviceSelectE = document.getElementById("deviceSelect");
+    this.uiChannelSelectE = document.getElementById("channelSelect");
     this.uiTempoE = document.getElementById("tempo");
     this.registerUiCallbacks();
 
@@ -227,16 +229,18 @@ class App {
 
       console.log(`Found ${WebMidi.inputs.length} MIDI devices`);
       this.inputs.forEach((device, index) => {
-        console.log(`Adding device ${index} ${device.name}`);
         this.appendDeviceOption(index, device.name)
       });
 
       this.selectDevice(0);
 
       this.uiDeviceSelectE.onchange = () => {
-        const index = this.uiDeviceSelectE.value;
-        console.log("Selected index " + index);
-        this.selectDevice(index);
+        const deviceIndex = parseInt(this.uiDeviceSelectE.value);
+        this.selectDevice(deviceIndex);
+      };
+      this.uiChannelSelectE.onchange = () => {
+        this.selectedChannel = parseInt(this.uiChannelSelectE.value);
+        this.registerMidiHandler();
       };
     }
   }
@@ -256,6 +260,7 @@ class App {
 
   selectDevice(index) {
     console.log(`Switching to device ${index}`);
+    checkNumber(index);
     for (let i = 0; i < this.uiDeviceSelectE.options.length; i++) {
       this.uiDeviceSelectE.options[i].selected = i === index;
     }
@@ -264,17 +269,21 @@ class App {
   }
 
   registerMidiHandler() {
-    this.inputs.forEach(i => {
-      if (i.channels[10].hasListener()) {
-        i.channels[10].removeListener();
-      }
+    this.inputs.forEach(input => {
+      input.removeListener();
     });
-    this.input.channels[10].addListener("noteon", e => {
+
+    const noteCallback = (e) => {
       const noteName = e.note.name + (e.note.accidental === undefined ? "" : "#");
       console.log(`Note ${noteName} at timestamp ${e.timestamp}`);
       this.noteQ.add(e.note, e.timestamp);
       dbg.event = e;
-    });
+    };
+    if (this.selectedChannel === 0) {
+      this.input.addListener("noteon", noteCallback);
+    } else {
+      this.input.addListener("noteon", noteCallback, { channels: [this.selectedChannel] });
+    }
   }
 
   toggle() {
@@ -347,8 +356,14 @@ class App {
     document.getElementById("tempoDec10").onclick = () => {
       this.setTempo(this.getUiTempo() - 10);
     };
-    document.getElementById("playButton").onclick = () => {
+    const playButtonE = document.getElementById("playButton");
+    playButtonE.onclick = () => {
       this.toggle();
+      if (this.isPlaying) {
+        playButtonE.textContent = "Stop";
+      } else {
+        playButtonE.textContent = "Play";
+      }
     };
     document.getElementById("sync").onclick = () => {
       this.sync();
