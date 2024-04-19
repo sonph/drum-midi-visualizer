@@ -1,4 +1,5 @@
 const appConfig = {
+  defaultTempo: 90,
   style: {
     background: "#333",
     grid: {

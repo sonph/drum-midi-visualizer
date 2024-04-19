@@ -2,12 +2,6 @@
 var dbg = {};
 const d = document;
 
-function checkState(bool, message) {
-  if (!bool) {
-    console.log(message);
-  }
-}
-
 class Grid {
   constructor(noteQueue) {
     this.isPlaying = false;
@@ -20,7 +14,6 @@ class Grid {
 
     this.tempo;
     this.canvasTotalTime;
-    this.setTempo(90);
 
     this.showIndicator = true;
 
@@ -169,7 +162,7 @@ class Grid {
         startY,
         endY);
     } else {
-      console.log(`Unhandled case: note(${note.startTime}, ${note.endTime}) and canvas ${this.canvasStartTime}`);
+      throw new Error(`Unhandled case: note(${note.startTime}, ${note.endTime}) and canvas ${this.canvasStartTime}`);
     }
   }
 
@@ -204,51 +197,22 @@ class Grid {
   }
 }
 
-class UI {
-  constructor() {
-    this.deviceSelectE = document.getElementById("deviceSelect");
-    dbg.deviceSelectE = this.deviceSelectE;
-  }
-
-  appendDeviceOption(value, text) {
-    this.maybeRemoveDefaultOption();
-    const optionE = document.createElement("option");
-    optionE.value = value;
-    optionE.text = text;
-    this.deviceSelectE.appendChild(optionE);
-  }
-
-  maybeRemoveDefaultOption() {
-    const defaultOptionE = this.deviceSelectE.querySelector(`option[value="defaultOption"]`);
-    if (defaultOptionE) {
-      defaultOptionE.remove();
-    }
-  }
-
-  selectDevice(index) {
-    for (let i = 0; i < this.deviceSelectE.options.length; i++) {
-      this.deviceSelectE.options[i].selected = i === index;
-    }
-  }
-
-  getSelectedDeviceIndex() {
-    return this.deviceSelectE.value;
-  }
-
-  onChange(callback) {
-    this.deviceSelectE.onchange = callback;
-  }
-}
-
 class App {
-  constructor(ui, grid, noteQueue, metronome) {
-    this.ui = ui;
+  constructor(grid, noteQueue, metronome) {
     this.grid = grid;
     this.inputs;
     this.selectedInput;
     this.noteQ = noteQueue;
     this.metronome = metronome;
     this.isPlaying = false;
+
+    // UI stuff
+    this.uiDeviceSelectE = document.getElementById("deviceSelect");
+    this.uiTempoE = document.getElementById("tempo");
+    this.registerUiCallbacks();
+
+    console.log(`Setting default tempo ${appConfig.defaultTempo}`);
+    this.setTempo(appConfig.defaultTempo);
   }
 
   // Function triggered when WEBMIDI.js is ready
@@ -259,28 +223,42 @@ class App {
       console.log("No MIDI device detected.");
     } else {
       this.inputs = WebMidi.inputs;
-      dbg.inputs = this.inputs;
       dbg.input = this.inputs[0];
 
       console.log(`Found ${WebMidi.inputs.length} MIDI devices`);
       this.inputs.forEach((device, index) => {
         console.log(`Adding device ${index} ${device.name}`);
-        this.ui.appendDeviceOption(index, device.name)
+        this.appendDeviceOption(index, device.name)
       });
 
-      this.ui.selectDevice(0);
       this.selectDevice(0);
 
-      this.ui.onChange(() => {
-        const index = this.ui.getSelectedDeviceIndex();
+      this.uiDeviceSelectE.onchange = () => {
+        const index = this.uiDeviceSelectE.value;
         console.log("Selected index " + index);
         this.selectDevice(index);
-      });
+      };
     }
+  }
+
+  appendDeviceOption(value, text) {
+    // Remove default device option.
+    const defaultOptionE = this.uiDeviceSelectE.querySelector(`option[value="defaultOption"]`);
+    if (defaultOptionE) {
+      defaultOptionE.remove();
+    }
+
+    const optionE = document.createElement("option");
+    optionE.value = value;
+    optionE.text = text;
+    this.uiDeviceSelectE.appendChild(optionE);
   }
 
   selectDevice(index) {
     console.log(`Switching to device ${index}`);
+    for (let i = 0; i < this.uiDeviceSelectE.options.length; i++) {
+      this.uiDeviceSelectE.options[i].selected = i === index;
+    }
     this.input = this.inputs[index];
     this.registerMidiHandler();
   }
@@ -330,48 +308,70 @@ class App {
     this.noteQ.reset();
   }
 
-  setTempo(tempoStr) {
+  setTempo(tempo) {
+    checkNumber(tempo);
+
+    this.uiTempoE.value = tempo;
     const currentlyPlaying = this.isPlaying;
     if (currentlyPlaying) {
       this.toggle();
     }
-    const tempo = parseInt(tempoStr);
     this.grid.setTempo(tempo);
     this.metronome.setTempo(tempo);
     if (currentlyPlaying) {
       this.toggle();
     }
   }
+
+  getUiTempo() {
+    return parseInt(this.uiTempoE.value);
+  }
+
+  registerUiCallbacks() {
+    // Buttons
+    document.getElementById("tempoInc1").onclick = () => {
+      this.setTempo(this.getUiTempo() + 1);
+    };
+    document.getElementById("tempoInc5").onclick = () => {
+      this.setTempo(this.getUiTempo() + 5);
+    };
+    document.getElementById("tempoInc10").onclick = () => {
+      this.setTempo(this.getUiTempo() + 10);
+    };
+    document.getElementById("tempoDec1").onclick = () => {
+      this.setTempo(this.getUiTempo() - 1);
+    };
+    document.getElementById("tempoDec5").onclick = () => {
+      this.setTempo(this.getUiTempo() - 5);
+    };
+    document.getElementById("tempoDec10").onclick = () => {
+      this.setTempo(this.getUiTempo() - 10);
+    };
+    document.getElementById("playButton").onclick = () => {
+      this.toggle();
+    };
+    document.getElementById("sync").onclick = () => {
+      this.sync();
+    };
+
+    this.uiTempoE.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        this.setTempo(this.getUiTempo());
+      }
+    });
+  }
 }
 
 function main() {
   console.log("main");
   const noteQueue = new NoteQueue();
-  const ui = new UI();
   const grid = new Grid(noteQueue);
   const metronome = new Metronome();
-  const app = new App(ui, grid, noteQueue, metronome);
-
   metronome.init();
+
+  const app = new App(grid, noteQueue, metronome);
+  app.registerUiCallbacks();
   app.onMidiReady();
-
-  document.getElementById("playButton").onclick = () => {
-    app.toggle();
-  };
-  document.getElementById("sync").onclick = () => {
-    app.sync();
-  };
-  const tempoE = document.getElementById("tempo");
-  tempoE.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") {
-      app.setTempo(tempoE.value);
-    }
-  });
-
-  dbg.ui = ui;
-  dbg.app = app;
-  dbg.grid = grid;
-  dbg.noteQ = noteQueue;
 }
 
 window.onload = function () {

@@ -108,3 +108,15 @@ class Note {
     return this.piece.color;
   }
 }
+
+function checkState(bool, message) {
+  if (!bool) {
+    console.log(message);
+  }
+}
+
+function checkNumber(x) {
+  if (isNaN(x)) {
+    console.log(`${typeof x} ${x} is not a number`);
+  }
+}
