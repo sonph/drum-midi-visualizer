@@ -1,10 +1,11 @@
-# Live Midi Visualizer
+# Drum Midi Visualizer
 
-This is a practice tool to visualize notes on a live grid.
+A light weight practice tool to visualize live MIDI notes coming from an
+electronic drum kit against a grid, with a built-in sync'ed metronome.
 
-For example, you can connect an electronic drum kit and practice with the
-sync'ed click and the notes will be placed on the grid. This allows for both
-audio and visual feedback when practicing.
+This tool allows you to see exactly how your hits align with the grid, and
+whether they were early or late relative to the pocket. This provides visual
+feedback in addition to audible feedback from the metronome.
 
 ## TODO
 
@@ -12,11 +13,15 @@ audio and visual feedback when practicing.
 - [x] Draw canvas and real time moving indicator
 - [x] Draw notes on a canvas
 - [x] Map notes to drum piece
-- [ ] Sync tempo with external MIDI device
-- [ ] Make metronome subdivisions configurable
+- [ ] Add keyboard shortcuts
 - [ ] Make canvas subdivisions configurable
 - [ ] Make canvas length (# of measures) configurable
+- [ ] "Mapping mode" to register MIDI notes against a particular drum piece
+- [ ] Make metronome subdivisions configurable
 - [ ] Make canvas resizable
+- [ ] Draw notes to reflect variations (dynamic, open hats, cross-stick)
+- [ ] Automate metronome
+- [ ] Sync tempo with external MIDI device
 
 ## References
 
