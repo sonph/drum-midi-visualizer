@@ -237,8 +237,9 @@ class App {
     this.uiDeviceSelectE = document.getElementById("deviceSelect");
     this.uiChannelSelectE = document.getElementById("channelSelect");
     this.uiTempoE = document.getElementById("tempo");
+    this.metronomeSubE = document.getElementById("metronomeSubdivision");
     this.noteLengthE = document.getElementById("noteWidth");
-    this.subdivisionE = document.getElementById("subdivision");
+    this.gridSubE = document.getElementById("gridSubdivision");
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
@@ -415,8 +416,12 @@ class App {
       this.noteLength = 1 / parseInt(this.noteLengthE.value);
     };
 
-    this.subdivisionE.onchange = () => {
-      this.grid.setSubdivision(parseInt(this.subdivisionE.value));
+    this.gridSubE.onchange = () => {
+      this.grid.setSubdivision(parseInt(this.gridSubE.value));
+    }
+    
+    this.metronomeSubE.onchange= () => {
+      this.metronome.setSubdivision(parseInt(this.metronomeSubE.value));
     }
   }
 }

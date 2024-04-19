@@ -49,15 +49,25 @@
       <button type="button" id="tempoInc5">+5</button>
       <button type="button" id="tempoInc1">+1</button>
 
-      <label for="noteWidth">Note length:</label>
+      <label for="metronomeSubdivision">Subdivisions:</label>
+      <select id="metronomeSubdivision">
+        <option value="4" selected>Quarter</option>
+        <option value="8">8th</option>
+        <option value="12">8th triplets</option>
+        <option value="16">16th</option>
+      </select>
+
+      <br>
+
+      <label for="noteWidth">Grid note length:</label>
       <select id="noteWidth">
         <option value="8">1/8th</option>
         <option value="16" selected>1/16th</option>
         <option value="32">1/32nd</option>
       </select>
 
-      <label for="subdivision">Subdivisions:</label>
-      <select id="subdivision">
+      <label for="gridSubdivision">Grid subdivisions:</label>
+      <select id="gridSubdivision">
         <option value="4" selected>Quarter</option>
         <option value="8">8th</option>
         <option value="12">8th triplets</option>

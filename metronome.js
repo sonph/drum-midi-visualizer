@@ -99,6 +99,26 @@ class Metronome {
     this.timerWorker.postMessage("stop");
   }
 
+  setSubdivision(sub) {
+    checkNumber(sub);
+    this.quarterVolume = 0;
+    this.eighthVolume = 0;
+    this.tripletVolume = 0;
+    this.sixteenthVolume = 0;
+    if (sub % 4 === 0) {
+      this.quarterVolume = 0.75;
+    }
+    if (sub % 8 === 0) {
+      this.eighthVolume = 0.6;
+    }
+    if (sub % 12 === 0) {
+      this.tripletVolume = 0.5;
+    }
+    if (sub % 16 === 0) {
+      this.sixteenthVolume = 0.5;
+    }
+  }
+
   setTempo(tempo) {
     console.log(`Metronome setting tempo to ${tempo}`);
     this.tempo = tempo;
