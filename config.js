@@ -5,13 +5,17 @@ const appConfig = {
     oddLaneBackground: "#333",
     evenLaneBackground: "#555",
     grid: {
+      measure: {
+        width: 4,
+        color: "#eee",
+      },
       beat: {
-        width: 1,
+        width: 2,
         color: "#ccc",
       },
-      measure: {
-        width: 2,
-        color: "#eee",
+      subdivision: {
+        width: 1,
+        color: "#888",
       },
       indicator: {
         width: 2,

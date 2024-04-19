@@ -7,10 +7,9 @@ class Grid {
     this.isPlaying = false;
     this.noteQ = noteQueue;
 
-    this.beatsCount = 8;
-    // Notes are rendered as a block, not a point.
-    // TODO: support variable note length with instruments such as a piano.
-    this.noteLength = 100; // ms
+    this.meter = 4;
+    this.subdivision = 4;
+    this.measures = 2;
 
     this.tempo;
     this.canvasTotalTime;
@@ -69,7 +68,13 @@ class Grid {
     console.log(`Grid setting tempo to ${tempo}`);
     this.tempo = tempo;
     const msPerBeat = 60 * 1000 / this.tempo;
-    this.canvasTotalTime = msPerBeat * this.beatsCount; // diff between start and end
+    this.canvasTotalTime = msPerBeat * this.measures * this.meter; // diff between start and end
+  }
+
+  setSubdivision(subdivision) {
+    checkNumber(subdivision);
+    this.subdivision = subdivision;
+    this.drawStatic();
   }
 
   sync() {
@@ -87,7 +92,6 @@ class Grid {
     const laneHeight = appConfig.style.note.height + 2 * (appConfig.style.note.spacing / 2);
     const laneTopPx = appConfig.style.grid.paddingTop - appConfig.style.note.spacing / 2;
     for (let i = 0; i < lanesCount; i++) {
-      console.log(`Drawing lane ${i}`)
       if (i % 2 === 0) {
         this.staticCtx.fillStyle = appConfig.style.evenLaneBackground;
       } else {
@@ -96,15 +100,21 @@ class Grid {
       this.staticCtx.fillRect(0, laneTopPx + i * laneHeight, this.cvWidth, laneHeight);
     }
 
-    // Draw vertical beat indicators
-    const pxBetweenBeats = this.cvWidth / this.beatsCount;
-    for (let i = 1; i < this.beatsCount; i++) {
-      const x = i * pxBetweenBeats;
-      this.staticCtx.lineWidth = appConfig.style.grid.beat.width;
-      this.staticCtx.strokeStyle = appConfig.style.grid.beat.color;
-      if (i % 4 === 0) {
+    // Draw vertical subdivision indicators
+    const subCount = this.measures * this.subdivision;
+    const subWidth = this.cvWidth / (subCount);
+    for (let i = 1; i < subCount; i++) {
+      const x = i * subWidth;
+      this.staticCtx.lineWidth = appConfig.style.grid.subdivision.width;
+      this.staticCtx.strokeStyle = appConfig.style.grid.subdivision.color;
+      if (i % this.subdivision === 0) {
+        // Measure
         this.staticCtx.lineWidth = appConfig.style.grid.measure.width;
         this.staticCtx.strokeStyle = appConfig.style.grid.measure.color;
+      } else if (i % (this.subdivision / this.meter) === 0) {
+        // Beat
+        this.staticCtx.lineWidth = appConfig.style.grid.beat.width;
+        this.staticCtx.strokeStyle = appConfig.style.grid.beat.color;
       }
       this.staticCtx.beginPath();
       this.staticCtx.moveTo(x, 0);
@@ -188,7 +198,7 @@ class Grid {
     const width = endX - startX;
     const height = endY - startY;
     ctx.beginPath();
-    ctx.roundRect(startX, startY, width, height, [4]);
+    ctx.roundRect(startX, startY, width, height, [3]);
     ctx.fill();
   }
 
@@ -228,6 +238,7 @@ class App {
     this.uiChannelSelectE = document.getElementById("channelSelect");
     this.uiTempoE = document.getElementById("tempo");
     this.noteLengthE = document.getElementById("noteWidth");
+    this.subdivisionE = document.getElementById("subdivision");
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
@@ -403,6 +414,10 @@ class App {
     this.noteLengthE.onchange = () => {
       this.noteLength = 1 / parseInt(this.noteLengthE.value);
     };
+
+    this.subdivisionE.onchange = () => {
+      this.grid.setSubdivision(parseInt(this.subdivisionE.value));
+    }
   }
 }
 
