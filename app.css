@@ -1,0 +1,131 @@
+.space-mono-regular {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.space-mono-bold {
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  font-style: normal;
+}
+
+input, select, button {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+  background-color: #333;
+  color: #ddd;
+}
+
+br {
+  display: block;
+  content: " ";
+  margin-top: 8px;
+}
+
+#top {
+  /* Total height: 160px */
+  height: 150px;
+  padding-top: 8px;
+  border-bottom: 2px solid white;
+  background-color: #333;
+
+  width: 100vw;
+  padding-left: 8px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+/* Hide vertical scrollbar. */
+#top::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+#top {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+#top div {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#top h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  border-bottom: 2px solid lightgray;
+  width: fit-content;
+}
+
+#topDevice {
+  width: 25vw;
+}
+
+#topMetronome {
+  width: 45vw;
+}
+
+#topGrid {
+  width: 25vw;
+}
+
+input#tempo {
+  font-size: 1.3em;
+  width: 4em;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#playButton, #sync {
+  width: 100px;
+}
+
+#main {
+  /* Takes up the rest of the viewport. */
+  border: dashed blue;
+  width: 100vw;
+  display: flex;
+  background-color: #333;
+}
+
+#mainLeft {
+  width: 20vw;
+  height: calc(100% - 140px);
+  border: dashed green;
+}
+
+#mainRight {
+  width: 80vw;
+  border: dashed green;
+  height: calc(100% - 140px);
+}
+
+canvas {
+  position: absolute;
+  top: 160px; /* Must match #top total height. */
+  left: 20vw;
+  width: 80vw;
+}
+
+canvas#staticGrid {
+  z-index: 0;
+}
+
+canvas#grid {
+  z-index: 1;
+}
+
+canvas#indicator {
+  z-index: 2;
+}

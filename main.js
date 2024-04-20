@@ -16,27 +16,24 @@ class Grid {
 
     this.showIndicator = true;
 
+    document.getElementById("main").style.backgroundColor = appConfig.style.background;
+
     this.cv = document.getElementById("grid");
     if (!this.cv.getContext) {
-      alert("Canvas is not supported");
+      alert("Your browser does not support <canvas>");
     }
-    this.ctx = this.cv.getContext("2d");
-    this.ctx.fillStyle = appConfig.style.note.defaultColor;
-    this.cvWidth = this.cv.width;
-    this.cvHeight = this.cv.height;
+    this.indicatorE = document.getElementById("indicator");
+    this.staticGridE = document.getElementById("staticGrid");
 
-    this.indicatorCtx = document.getElementById("indicator").getContext("2d");
-    this.indicatorCtx.lineWidth = appConfig.style.grid.indicator.width;
-    this.indicatorCtx.strokeStyle = appConfig.style.grid.indicator.color;
+    this.gridCtx = this.cv.getContext("2d");
+    this.gridCtx.fillStyle = appConfig.style.note.defaultColor;
+    this.indicatorCtx = this.indicatorE.getContext("2d");
+    this.staticCtx = this.staticGridE.getContext("2d");
 
-    this.staticCtx = document.getElementById("staticGrid").getContext("2d");
-    this.drawStatic();
-
-    this.gridCtx = document.getElementById("grid").getContext("2d");
-    this.gridCtx.lineWidth = 4;
-    this.gridCtx.strokeStyle = "red";
-
+    this.cvWidth;
+    this.cvHeight;
     this.calculateCanvasStartEndTime(true);
+    this.resize();
   }
 
   get canvasEndTime() {
@@ -219,6 +216,8 @@ class Grid {
 
   drawIndicator(currentTime) {
     const x = (currentTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
+    this.indicatorCtx.lineWidth = appConfig.style.grid.indicator.width;
+    this.indicatorCtx.strokeStyle = appConfig.style.grid.indicator.color;
     this.indicatorCtx.beginPath();
     this.indicatorCtx.moveTo(x, 0);
     this.indicatorCtx.lineTo(x, this.cvHeight);
@@ -239,6 +238,22 @@ class Grid {
   calculateCanvasTotalTime() {
     const msPerBeat = 60 * 1000 / this.tempo;
     this.canvasTotalTime = msPerBeat * this.measures * this.meter; // diff between start and end
+  }
+
+  resize() {
+    this.cvWidth = window.innerWidth * 0.8;
+    this.cvHeight = window.innerHeight - 140;
+
+    console.log(`Resize canvas ${this.cvWidth} x ${this.cvHeight}`);
+    this.staticGridE.width = this.cvWidth;
+    this.staticGridE.height = this.cvHeight;
+    this.cv.width = this.cvWidth;
+    this.cv.height = this.cvHeight;
+    this.indicatorE.width = this.cvWidth;
+    this.indicatorE.height = this.cvHeight;
+
+    this.drawStatic();
+    this.drawNotes();
   }
 }
 
@@ -365,7 +380,6 @@ class App {
         playButtonE.textContent = "Play";
       this.metronome.stop();
       this.grid.stop();
-      this.noteQ.reset();
     }
   }
 
@@ -430,6 +444,9 @@ class App {
         this.setTempo(this.getUiTempo());
       }
     });
+    this.uiTempoE.addEventListener("click", function () {
+      this.select();
+    });
 
     this.gridMeasuresE.onchange = () => {
       this.grid.setMeasures(parseInt(this.gridMeasuresE.value));
@@ -448,6 +465,25 @@ class App {
     this.metronomeSubE.onchange= () => {
       this.metronome.setSubdivision(parseInt(this.metronomeSubE.value));
     };
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space" || event.key === " ") {
+        console.log("Space key pressed!");
+        this.toggle();
+      } else if (event.code === "KeyJ" || event.key === "j") {
+        this.changeTempo(-1);
+      } else if (event.code === "KeyK" || event.key === "k") {
+        this.changeTempo(1);
+      } else if (event.code === "KeyH" || event.key === "h") {
+        this.changeTempo(-5);
+      } else if (event.code === "KeyL" || event.key === "l") {
+        this.changeTempo(5);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      this.grid.resize();
+    });
   }
 }
 
@@ -462,21 +498,6 @@ function main() {
   app.registerUiCallbacks();
   app.onMidiReady();
 
-  // For some reason .toggle() is not recognized when placed in registerUiCallbacks();
-  window.addEventListener("keydown", function (event) {
-    if (event.code === "Space" || event.key === " ") {
-      console.log("Space key pressed!");
-      app.toggle();
-    } else if (event.code === "KeyJ" || event.key === "j") {
-      app.changeTempo(-1);
-    } else if (event.code === "KeyK" || event.key === "k") {
-      app.changeTempo(1);
-    } else if (event.code === "KeyH" || event.key === "h") {
-      app.changeTempo(-5);
-    } else if (event.code === "KeyL" || event.key === "l") {
-      app.changeTempo(5);
-    }
-  });
 }
 
 window.onload = function () {
