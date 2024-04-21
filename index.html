@@ -20,14 +20,14 @@
     <div id="topDevice">
       <h3>MIDI Device</h3>
       <label for="deviceSelect">Device:</label>
-      <select id="deviceSelect">
+      <select id="deviceSelect" title="Select the device for MIDI note input">
         <option value="defaultOption">
           &lt;Select an Input device&gt;
         </option>
       </select>
       <br>
       <label for="channelSelect">Channel:</label>
-      <select id="channelSelect">
+      <select id="channelSelect" title="Select the channel for MIDI note input">
         <option value="0" selected>All Channels</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -50,34 +50,34 @@
 
     <div id="topMetronome">
       <h3>Metronome</h3>
-      <button type="button" id="tempoDec1">-1</button>
-      <button type="button" id="tempoDec5">-5</button>
-      <button type="button" id="tempoDec10">-10</button>
+      <button type="button" id="tempoDec1" title="Decrease tempo by 1 bpm">-1</button>
+      <button type="button" id="tempoDec5" title="Decrease tempo by 5 bpm">-5</button>
+      <button type="button" id="tempoDec10" title="Decrease tempo by 10 bpm">-10</button>
       <input type="number" id="tempo">
-      <button type="button" id="tempoInc10">+10</button>
-      <button type="button" id="tempoInc5">+5</button>
-      <button type="button" id="tempoInc1">+1</button>
-      <select id="metronomeSubdivision">
+      <button type="button" id="tempoInc10" title="Increase tempo by 10 bpm">+10</button>
+      <button type="button" id="tempoInc5" title="Increase tempo by 5 bpm">+5</button>
+      <button type="button" id="tempoInc1" title="Increase tempo by 1 bpm">+1</button>
+      <select id="metronomeSubdivision" title="Select metronome subdivision">
         <option value="4" selected>Qtr</option>
         <option value="8">8th</option>
         <option value="12">8th trp</option>
         <option value="16">16th</option>
       </select>
       <br>
-      <button type="button" id="playButton">Play</button>
-      <button type="button" id="sync">Sync</button>
+      <button type="button" id="playButton" title="Start metronome">Play</button>
+      <button type="button" id="sync" title="Re-sync metronome and visual grid">Sync</button>
     </div>
 
     <div id="topGrid">
       <h3>Grid Options</h3>
       <label for="measures">Measures:</label>
-      <select id="measures">
+      <select id="measures" title="How many measures before repeat">
         <option value="1">1</option>
         <option value="2" selected>2</option>
         <option value="4">4</option>
       </select>
       <label for="meter">Meter:</label>
-      <select id="meter">
+      <select id="meter" title="Beats in a measure">
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4" selected>4</option>
@@ -88,7 +88,7 @@
       </select>
       <br>
       <label for="gridSubdivision">Subs:</label>
-      <select id="gridSubdivision">
+      <select id="gridSubdivision" title="Select grid subdivision">
         <option value="4" selected>Qtr</option>
         <option value="8">8th</option>
         <option value="12">8th trp</option>
@@ -96,7 +96,7 @@
       </select>
       <br>
       <label for="noteWidth">Note length:</label>
-      <select id="noteWidth">
+      <select id="noteWidth" title="Length of notes displayed on the grid">
         <option value="8">1/8th</option>
         <option value="16" selected>1/16th</option>
         <option value="32">1/32nd</option>
