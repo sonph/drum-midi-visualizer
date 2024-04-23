@@ -111,7 +111,11 @@ input#tempo {
   height: calc(100% - 140px);
 }
 
-canvas {
+canvas#volumeKnob {
+  vertical-align: middle;
+}
+
+#main canvas {
   position: absolute;
   top: 160px; /* Must match #top total height. */
   left: 20vw;

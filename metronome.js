@@ -7,6 +7,7 @@ class Metronome {
     this.tempo = 90;
     this.meter = 4;
     this.masterVolume = 0.5;
+    this.previousMasterVolume = 0.5;
     this.accentVolume = 1;
     this.quarterVolume = 0.75;
     this.eighthVolume = 0;
@@ -129,12 +130,21 @@ class Metronome {
     this.tempo = tempo;
   }
 
+  setVolume(volume) {
+    checkNumber(volume);
+    checkState(0 <= volume <= 1.0, `Volume ${volume} must be betwen 0.0 and 1.0`);
+    this.masterVolume = volume;
+  }
+
   soundOff() {
-    this.masterVolume = 0;
+    if (this.masterVolume > 0) {
+      this.previousMasterVolume = this.masterVolume;
+      this.masterVolume = 0;
+    }
   }
 
   soundOn() {
-    this.masterVolume = 0.5;
+    this.masterVolume = this.previousMasterVolume;
   }
 
   init() {

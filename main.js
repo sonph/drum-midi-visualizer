@@ -278,6 +278,11 @@ class App {
     this.gridSubE = document.getElementById("gridSubdivision");
     this.noteLengthE = document.getElementById("noteWidth");
     this.keyDown = false;
+
+    this.volumeKnob = new VolumeCanvas("volumeKnob");
+    this.volumeKnob.onVolumeChange((volume) => {
+      this.metronome.setVolume(volume);
+    });
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
