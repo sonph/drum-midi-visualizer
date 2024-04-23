@@ -277,6 +277,7 @@ class App {
     this.gridMeterE = document.getElementById("meter");
     this.gridSubE = document.getElementById("gridSubdivision");
     this.noteLengthE = document.getElementById("noteWidth");
+    this.keyDown = false;
     this.registerUiCallbacks();
 
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
@@ -467,6 +468,12 @@ class App {
     };
 
     window.addEventListener("keydown", (event) => {
+      // Handle keydown exactly once, until the key is released.
+      // This prevents the key being held down from triggering multiple times.
+      if (this.keyDown) {
+        return;
+      }
+      this.keyDown = true;
       if (event.code === "Space" || event.key === " ") {
         console.log("Space key pressed!");
         this.toggle();
@@ -478,6 +485,12 @@ class App {
         this.changeTempo(-5);
       } else if (event.code === "KeyL" || event.key === "l") {
         this.changeTempo(5);
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      if (this.keyDown) {
+        this.keyDown = false;
       }
     });
 
