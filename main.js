@@ -426,17 +426,11 @@ class App {
     document.getElementById("tempoInc5").onclick = () => {
       this.setTempo(this.getUiTempo() + 5);
     };
-    document.getElementById("tempoInc10").onclick = () => {
-      this.setTempo(this.getUiTempo() + 10);
-    };
     document.getElementById("tempoDec1").onclick = () => {
       this.setTempo(this.getUiTempo() - 1);
     };
     document.getElementById("tempoDec5").onclick = () => {
       this.setTempo(this.getUiTempo() - 5);
-    };
-    document.getElementById("tempoDec10").onclick = () => {
-      this.setTempo(this.getUiTempo() - 10);
     };
     document.getElementById("playButton").onclick = () => {
       this.toggle();
