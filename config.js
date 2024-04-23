@@ -43,7 +43,7 @@ const appConfig = {
       color: "#7EB234",
     },
     ride: {
-      notes: [],
+      notes: ["C4", "C#4"],
       position: 3,
       color: "#7EB234",
     },
@@ -63,7 +63,7 @@ const appConfig = {
       color: "#f66b6b",
     },
     tom2: {
-      notes: [],
+      notes: ["F4"],
       position: 6,
       color: "#93d6f2",
     },
