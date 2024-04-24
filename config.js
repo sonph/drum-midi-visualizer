@@ -2,8 +2,6 @@ const appConfig = {
   defaultTempo: 90,
   style: {
     background: "#333",
-    oddLaneBackground: "#333",
-    evenLaneBackground: "#555",
     grid: {
       measure: {
         width: 4,
@@ -25,10 +23,18 @@ const appConfig = {
       paddingTop: 100,
     },
     note: {
-      height: 20,
-      spacing: 40, // vertical spacing
       defaultColor: "#ddd",
+      minHeight: 5,
+      maxHeight: 50, // Higher velocity = more height.
     },
+    lane: {
+      height: 60,
+      bottomPadding: 10,
+      oddLaneBackground: "#333",
+      evenLaneBackground: "#555",
+    },
+    // Lane height of 60px with bottom padding of 10px.
+    // For a note with attack 0.5 = height 27.5px, draw from 22.5px to 50px
   },
   noteMapping: {
     // Lane/position 1 for unknown notes.

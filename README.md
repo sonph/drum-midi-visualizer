@@ -17,9 +17,10 @@ feedback in addition to audible feedback from the metronome.
 - [x] Make canvas subdivisions configurable (quarter, 8th, 8th triplets, 16th)
 - [x] Make metronome subdivisions configurable
 - [x] Make number of measures and number of beats configurable
-- [ ] "Mapping" or "learning" mode to register MIDI notes against a particular drum piece
 - [x] Make canvas resizable
-- [ ] Draw notes to reflect variations (dynamic, open hats, cross-stick)
+- [x] Vary note height to reflect dynamic
+- [ ] Draw notes to reflect variations (open hats, bell, cross-stick)
+- [ ] "Mapping" or "learning" mode to register MIDI notes against a particular drum piece
 - [ ] Automate metronome (silence, increase/decrease tempo)
 - [ ] Sync tempo with external MIDI device
 

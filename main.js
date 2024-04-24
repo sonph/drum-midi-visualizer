@@ -99,16 +99,20 @@ class Grid {
     // Draw lanes background
     const lanesCount = Utils.getLanesCount();
     console.log(`Max ${lanesCount} lanes`);
-    const laneHeight = appConfig.style.note.height + 2 * (appConfig.style.note.spacing / 2);
-    const laneTopPx = appConfig.style.grid.paddingTop - appConfig.style.note.spacing / 2;
+    const laneHeight = appConfig.style.lane.height;
+
+    this.staticCtx.save();
+    this.staticCtx.translate(0, appConfig.style.grid.paddingTop);
     for (let i = 0; i < lanesCount; i++) {
       if (i % 2 === 0) {
-        this.staticCtx.fillStyle = appConfig.style.evenLaneBackground;
+        this.staticCtx.fillStyle = appConfig.style.lane.evenLaneBackground;
       } else {
-        this.staticCtx.fillStyle = appConfig.style.oddLaneBackground;
+        this.staticCtx.fillStyle = appConfig.style.lane.oddLaneBackground;
       }
-      this.staticCtx.fillRect(0, laneTopPx + i * laneHeight, this.cvWidth, laneHeight);
+      this.staticCtx.fillRect(0, 0, this.cvWidth, laneHeight);
+      this.staticCtx.translate(0, laneHeight);
     }
+    this.staticCtx.restore();
 
     // Draw vertical subdivision indicators
     const subCount = this.measures * this.subdivision;
@@ -163,8 +167,10 @@ class Grid {
   renderNote(note, currentTime) {
     // Render
     const noteConfig = new Note(note.note);
-    const startY = noteConfig.y;
-    const endY = startY + appConfig.style.note.height;
+    const endY = noteConfig.bottomY;
+    const noteHeight = appConfig.style.note.minHeight +
+      note.note.attack * (appConfig.style.note.maxHeight - appConfig.style.note.minHeight);
+    const startY = endY - noteHeight;
     this.gridCtx.fillStyle = noteConfig.color;
 
     if (note.startTime >= this.canvasStartTime) {
@@ -346,8 +352,8 @@ class App {
     });
 
     const noteCallback = (e) => {
-      const noteName = e.note.name + (e.note.accidental === undefined ? "" : "#");
-      console.log(`Note ${noteName} at timestamp ${e.timestamp}`);
+      // e.note: https://webmidijs.org/api/classes/Note
+      console.log(`Note ${e.note.identifier} at timestamp ${e.timestamp}`);
       // Make the note smaller (* 0.8) to reduce overlap.
       const msPerBeat = 60 * 1000 / this.getUiTempo();
       const noteLength = 0.8 * (4 * msPerBeat) * this.noteLength;

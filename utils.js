@@ -24,7 +24,7 @@ class NoteQueue {
       this.firstAvailableNoteIndex = 0;
     }
     this.notesArr.push({
-      note: note,
+      note: note, // https://webmidijs.org/api/classes/Note
       startTime: startTime,
       endTime: endTime,
       visible: true
@@ -94,23 +94,20 @@ for (const pieceName in appConfig.noteMapping) {
 class Note {
   constructor(note) {
     // Event.Note
+    // note.identifier consists of note name + optional accidental (#) + octave.
     this.note = note;
-    if (note.accidental === undefined) {
-      this.noteNameWithOctave = note.name + note.octave;
-    } else {
-      this.noteNameWithOctave = note.name + "#" + note.octave;
-    }
-    this.piece = noteNameToPiece[this.noteNameWithOctave];
+    this.piece = noteNameToPiece[note.identifier];
   }
 
-  get y() {
+  get bottomY() {
+    const canvasPaddingTop = appConfig.style.grid.paddingTop;
+    const laneHeight = appConfig.style.lane.height;
+    const laneBottomPadding = appConfig.style.lane.bottomPadding;
     if (this.piece === undefined) {
-      return appConfig.style.grid.paddingTop;
+      return canvasPaddingTop + laneHeight - laneBottomPadding;
     }
     const position = this.piece.position;
-    const spacing = appConfig.style.note.spacing;
-    const noteHeight = appConfig.style.note.height;
-    return appConfig.style.grid.paddingTop + (position - 1) * (noteHeight + spacing);
+    return appConfig.style.grid.paddingTop + position * laneHeight - laneBottomPadding;
   }
 
   get color() {
