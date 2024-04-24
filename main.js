@@ -496,6 +496,13 @@ class App {
     window.addEventListener("resize", () => {
       this.grid.resize();
     });
+
+    document.getElementById("showHelp").addEventListener("click", () => {
+      document.getElementById("help").style.visibility = "visible";
+    });
+    document.getElementById("closeHelp").addEventListener("click", () => {
+      document.getElementById("help").style.visibility = "hidden";
+    });
   }
 }
 

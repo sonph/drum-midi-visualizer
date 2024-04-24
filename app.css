@@ -54,10 +54,10 @@ br {
 #top {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+  display: flex;
 }
 
 #top div {
-  display: inline-block;
   vertical-align: top;
 }
 
@@ -69,7 +69,7 @@ br {
 }
 
 #topDevice {
-  width: 25vw;
+  width: 30vw;
 }
 
 #topMetronome {
@@ -78,6 +78,10 @@ br {
 
 #topGrid {
   width: 25vw;
+}
+
+#topHelp {
+  width: 5vw;
 }
 
 input#tempo {
@@ -132,4 +136,42 @@ canvas#grid {
 
 canvas#indicator {
   z-index: 2;
+}
+
+#help {
+  position: absolute;
+  width: 80vw;
+  height: 80vh;
+  margin-top: 10vh;
+  margin-left: 10vw;
+  z-index: 10;
+  background-color: white;
+  border: 1px solid gray;
+  box-shadow: 10px 10px 5px #222;
+
+  color: #333;
+  visibility: hidden;
+}
+
+#helpHeader {
+  display: flex;
+}
+
+#help h3, #helpBody {
+  margin-left: 2%;
+}
+
+#help h3 {
+  border-bottom: 2px solid #333;
+  width: fit-content;
+}
+
+#closeHelp {
+  margin-left: auto;
+  margin-right: 2%;
+  margin-top: 2%;
+}
+
+.clickable:hover {
+  text-decoration: underline;
 }
