@@ -97,7 +97,6 @@ input#tempo {
 
 #main {
   /* Takes up the rest of the viewport. */
-  border: dashed blue;
   width: 100vw;
   display: flex;
   background-color: #333;
@@ -106,12 +105,10 @@ input#tempo {
 #mainLeft {
   width: 20vw;
   height: calc(100% - 140px);
-  border: dashed green;
 }
 
 #mainRight {
   width: 80vw;
-  border: dashed green;
   height: calc(100% - 140px);
 }
 
@@ -174,4 +171,15 @@ canvas#indicator {
 
 .clickable:hover {
   text-decoration: underline;
+}
+
+#topPadding {
+  margin: 0;
+  height: 100px;
+}
+
+.lane {
+  height: 60px;
+  text-align: right;
+  padding-right: 20px;
 }
