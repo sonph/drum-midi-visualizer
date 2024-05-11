@@ -291,12 +291,17 @@ class App {
     });
     this.registerUiCallbacks();
 
+    // TODO: alert that Safari is not supported.
+
     console.log(`Setting default tempo ${appConfig.defaultTempo}`);
     this.setTempo(appConfig.defaultTempo);
   }
 
   // Function triggered when WEBMIDI.js is ready
   onMidiReady() {
+    // TODO: auto detect plugged in midi device
+    // TODO: still render and use the metronome even when no midi device
+    // is available.
     console.log("WebMidi ready");
     // Display available MIDI input devices
     if (WebMidi.inputs.length < 1) {
@@ -358,6 +363,11 @@ class App {
       const msPerBeat = 60 * 1000 / this.getUiTempo();
       const noteLength = 0.8 * (4 * msPerBeat) * this.noteLength;
       this.noteQ.add(e.note, e.timestamp, e.timestamp + noteLength);
+      // TODO: move this note to config.
+      // When F#4 (floor tom rim) is triggered, play/pause.
+      if (e.note.identifier === "F#4") {
+        this.toggle();
+      }
       dbg.event = e;
     };
     if (this.selectedChannel === 0) {
