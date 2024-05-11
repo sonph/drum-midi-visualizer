@@ -144,7 +144,6 @@ class Grid {
     // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
     this.calculateCanvasStartEndTime(false);
 
-    this.indicatorCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
     if (this.showIndicator) {
       this.drawIndicator(currentTime);
     }
@@ -221,6 +220,7 @@ class Grid {
   }
 
   drawIndicator(currentTime) {
+    this.indicatorCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
     const x = (currentTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     this.indicatorCtx.lineWidth = appConfig.style.grid.indicator.width;
     this.indicatorCtx.strokeStyle = appConfig.style.grid.indicator.color;
