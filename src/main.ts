@@ -1,18 +1,5 @@
 // Debug object for inspecting in the console.
-var dbg = {
-  input: undefined,
-  event: undefined
-};
-const d = document;
-
-interface MIDIInput {
-}
-
-
-interface WebMidiInterface {
-  inputs: MIDIInput[];
-  enable: () => Promise<void>;
-}
+var debug: { [key: string]: any } = {};
 
 class Grid {
   isPlaying: boolean;
@@ -149,7 +136,7 @@ class Grid {
     const subCount = this.measures * this.subdivision;
     const subWidth = this.cvWidth / (subCount);
     for (let i = 0; i < subCount; i++) {
-      var x =  i * subWidth;
+      var x = i * subWidth;
       this.staticCtx.lineWidth = appConfig.style.grid.subdivision.width;
       this.staticCtx.strokeStyle = appConfig.style.grid.subdivision.color;
       if (i % (this.subdivision / this.meter) === 0) {
@@ -296,9 +283,8 @@ class Grid {
 class App {
   grid: Grid;
   noteQ: NoteQueue;
-  inputs: WebMidi.MIDIInput[];
-  input: WebMidi.MIDIInput;
-  selectedInput: WebMidi.MIDIInput;
+  inputs?: WebMidi.MIDIInput[];
+  input?: WebMidi.MIDIInput;
   selectedChannel: number; // 0 means all
   metronome: Metronome;
   isPlaying: boolean;
@@ -313,17 +299,14 @@ class App {
   noteLengthE: HTMLSelectElement;
   keyDown: boolean; // Prevent multiple keydown events
   volumeKnob: VolumeCanvas;
-  onMidiReadyCallback: () => void;
 
   constructor(grid: Grid, noteQueue: NoteQueue, metronome: Metronome) {
     this.grid = grid;
-    this.inputs;
-    this.selectedInput;
     this.selectedChannel = 0; // 0 means all
     this.noteQ = noteQueue;
     this.metronome = metronome;
     this.isPlaying = false;
-    this.noteLength = 1/16;
+    this.noteLength = 1 / 16;
 
     // UI stuff
     this.uiDeviceSelectE = document.getElementById("deviceSelect") as HTMLSelectElement;
@@ -348,51 +331,69 @@ class App {
     this.setTempo(appConfig.defaultTempo);
   }
 
-  // Function triggered when WEBMIDI.js is ready
-  onMidiReady() {
-    // TODO: auto detect plugged in midi device
+  onMidiReady = () => {
     // TODO: still render and use the metronome even when no midi device
     // is available.
     console.log("WebMidi ready");
-    // Display available MIDI input devices
-    if (WebMidi.inputs.length < 1) {
-      console.log("No MIDI device detected.");
-    } else {
-      this.inputs = WebMidi.inputs;
-      dbg.input = this.inputs[0];
-
-      console.log(`Found ${WebMidi.inputs.length} MIDI devices`);
-      this.inputs.forEach((device, index) => {
-        this.appendDeviceOption(index, device.name)
-      });
-
+    this.refreshDeviceOptions();
+    if (WebMidi.inputs.length >= 1) {
       this.selectDevice(0);
-
-      this.uiDeviceSelectE.onchange = () => {
-        const deviceIndex = parseInt(this.uiDeviceSelectE.value);
-        this.selectDevice(deviceIndex);
-      };
-      this.uiChannelSelectE.onchange = () => {
-        this.selectedChannel = parseInt(this.uiChannelSelectE.value);
-        this.registerMidiHandler();
-      };
     }
+
+    this.uiDeviceSelectE.onchange = () => {
+      const deviceIndex = parseInt(this.uiDeviceSelectE.value);
+      this.selectDevice(deviceIndex);
+    };
+    this.uiChannelSelectE.onchange = () => {
+      this.selectedChannel = parseInt(this.uiChannelSelectE.value);
+      this.registerMidiHandler();
+    };
+  };
+
+  refreshDeviceOptions = () => {
+    if (!this.isPlaying) {
+      console.log("Refreshing MIDI device options");
+      if ((WebMidi.inputs?.length || 0) !== (this.inputs?.length || 0)) {
+        console.log("Found different number of MIDI inputs, refreshing options");
+        this.showDeviceOptions();
+        if ((this.inputs?.length || 0) === 0) {
+          this.selectDevice(null);
+        }
+      }
+    }
+    setTimeout(() => {
+      this.refreshDeviceOptions();
+    }, 3000);
   }
 
-  appendDeviceOption(value: number, text: string) {
+  showDeviceOptions() {
+    console.log(`Found ${WebMidi.inputs.length} MIDI devices`);
+    if (WebMidi.inputs.length === 0) {
+      this.uiChannelSelectE.innerHTML = '<option value="defaultOption">&lt;Select an Input device&gt;</option>';
+      return;
+    }
+    debug.inputs = WebMidi.inputs;
+    this.inputs = WebMidi.inputs;
+
     // Remove default device option.
     const defaultOptionE = this.uiDeviceSelectE.querySelector(`option[value="defaultOption"]`);
     if (defaultOptionE) {
       defaultOptionE.remove();
     }
 
-    const optionE = document.createElement("option");
-    optionE.value = value.toString();
-    optionE.text = text;
-    this.uiDeviceSelectE.appendChild(optionE);
+    WebMidi.inputs.forEach((input: MIDIInput, index: number) => {
+      const optionE = document.createElement("option");
+      optionE.value = index.toString();
+      optionE.text = input.name;
+      this.uiDeviceSelectE.appendChild(optionE);
+    });
   }
 
-  selectDevice(index: number) {
+  selectDevice(index: number | null) {
+    if (index === null) {
+      this.input = undefined;
+      return;
+    }
     console.log(`Switching to device ${index}`);
     for (let i = 0; i < this.uiDeviceSelectE.options.length; i++) {
       this.uiDeviceSelectE.options[i].selected = i === index;
@@ -418,7 +419,7 @@ class App {
       if (e.note.identifier === "F#4") {
         this.toggle();
       }
-      dbg.event = e;
+      debug.event = e;
     };
     if (this.selectedChannel === 0) {
       this.input.addListener("noteon", noteCallback);
@@ -448,11 +449,11 @@ class App {
         this.sync();
         this.grid.indicatorOn();
       }, 300);
-    } else {
-        playButtonE.textContent = "Play";
-      this.metronome.stop();
-      this.grid.stop();
+      return;
     }
+    playButtonE.textContent = "Play";
+    this.metronome.stop();
+    this.grid.stop();
   }
 
   sync() {
@@ -461,8 +462,8 @@ class App {
     this.noteQ.reset();
   }
 
-  setTempo(tempo) {
-    this.uiTempoE.value = tempo;
+  setTempo(tempo: number) {
+    this.uiTempoE.value = tempo.toString();
     const currentlyPlaying = this.isPlaying;
     if (currentlyPlaying) {
       this.toggle();
@@ -474,11 +475,11 @@ class App {
     }
   }
 
-  changeTempo(amount) {
+  changeTempo(amount: number) {
     this.setTempo(this.getUiTempo() + amount);
   }
 
-  getUiTempo() {
+  getUiTempo(): number {
     return parseInt(this.uiTempoE.value);
   }
 
@@ -526,7 +527,7 @@ class App {
     this.noteLengthE.onchange = () => {
       this.noteLength = 1 / parseInt(this.noteLengthE.value);
     };
-    this.metronomeSubE.onchange= () => {
+    this.metronomeSubE.onchange = () => {
       this.metronome.setSubdivision(parseInt(this.metronomeSubE.value));
     };
 
@@ -571,7 +572,7 @@ class App {
 }
 
 function main() {
-  console.log("main");
+  console.log("Running main()");
   const noteQueue = new NoteQueue();
   const grid = new Grid(noteQueue);
   const metronome = new Metronome();
@@ -580,12 +581,21 @@ function main() {
   const app = new App(grid, noteQueue, metronome);
   app.registerUiCallbacks();
   app.onMidiReady();
-
 }
 
 window.onload = function () {
+  console.log("Initializing app");
+  const noteQueue = new NoteQueue();
+  const grid = new Grid(noteQueue);
+  const metronome = new Metronome();
+  metronome.init();
+
+  const app = new App(grid, noteQueue, metronome);
+  app.registerUiCallbacks();
+  debug.app = app;
+
   WebMidi
     .enable()
-    .then(main)
+    .then(app.onMidiReady)
     .catch(err => alert(err));
 }
