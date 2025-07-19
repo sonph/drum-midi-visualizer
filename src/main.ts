@@ -1,9 +1,39 @@
 // Debug object for inspecting in the console.
-var dbg = {};
+var dbg = {
+  input: undefined,
+  event: undefined
+};
 const d = document;
 
+interface MIDIInput {
+}
+
+
+interface WebMidiInterface {
+  inputs: MIDIInput[];
+  enable: () => Promise<void>;
+}
+
 class Grid {
-  constructor(noteQueue) {
+  isPlaying: boolean;
+  noteQ: NoteQueue;
+  meter: number;
+  subdivision: number;
+  measures: number;
+  tempo: number;
+  canvasTotalTime: number;
+  canvasStartTime: number;
+  showIndicator: boolean;
+  cv: HTMLCanvasElement;
+  indicatorE: HTMLCanvasElement;
+  staticGridE: HTMLCanvasElement;
+  gridCtx: CanvasRenderingContext2D;
+  indicatorCtx: CanvasRenderingContext2D;
+  staticCtx: CanvasRenderingContext2D;
+  cvWidth: number;
+  cvHeight: number;
+
+  constructor(noteQueue: NoteQueue) {
     this.isPlaying = false;
     this.noteQ = noteQueue;
 
@@ -18,12 +48,12 @@ class Grid {
 
     document.getElementById("main").style.backgroundColor = appConfig.style.background;
 
-    this.cv = document.getElementById("grid");
+    this.cv = document.getElementById("grid") as HTMLCanvasElement;
     if (!this.cv.getContext) {
       alert("Your browser does not support <canvas>");
     }
-    this.indicatorE = document.getElementById("indicator");
-    this.staticGridE = document.getElementById("staticGrid");
+    this.indicatorE = document.getElementById("indicator") as HTMLCanvasElement;
+    this.staticGridE = document.getElementById("staticGrid") as HTMLCanvasElement;
 
     this.gridCtx = this.cv.getContext("2d");
     this.gridCtx.fillStyle = appConfig.style.note.defaultColor;
@@ -61,30 +91,31 @@ class Grid {
     this.isPlaying = false;
   }
 
-  setTempo(tempo) {
+  setTempo(tempo: number): Grid {
     console.log(`Grid setting tempo to ${tempo}`);
     this.tempo = tempo;
     this.calculateCanvasTotalTime();
+    return this;
   }
 
-  setMeasures(measures) {
-    checkNumber(measures);
+  setMeasures(measures: number): Grid {
     this.measures = measures;
     this.calculateCanvasTotalTime();
     this.drawStatic();
+    return this;
   }
 
-  setMeter(meter) {
-    checkNumber(meter);
+  setMeter(meter: number): Grid {
     this.meter = meter;
     this.calculateCanvasTotalTime();
     this.drawStatic();
+    return this;
   }
 
-  setSubdivision(subdivision) {
-    checkNumber(subdivision);
+  setSubdivision(subdivision: number): Grid {
     this.subdivision = subdivision;
     this.drawStatic();
+    return this;
   }
 
   sync() {
@@ -139,7 +170,7 @@ class Grid {
     }
   }
 
-  animate(currentTime) {
+  animate(currentTime: DOMHighResTimeStamp) {
     // currentTime: DOMHighResTimeStamp in ms
     // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
     this.calculateCanvasStartEndTime(false);
@@ -155,7 +186,7 @@ class Grid {
     }
   }
 
-  drawNotes(currentTime) {
+  drawNotes(currentTime: DOMHighResTimeStamp) {
     // TODO: Maybe optimize by checking if there are notes to hide first.
     this.gridCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
 
@@ -163,14 +194,13 @@ class Grid {
     this.noteQ.notes.forEach(note => this.renderNote(note, currentTime));
   }
 
-  renderNote(note, currentTime) {
+  renderNote(note: Note, currentTime: DOMHighResTimeStamp) {
     // Render
-    const noteConfig = new Note(note.note);
-    const endY = noteConfig.bottomY;
+    const endY = note.bottomY;
     const noteHeight = appConfig.style.note.minHeight +
-      note.note.attack * (appConfig.style.note.maxHeight - appConfig.style.note.minHeight);
+      note.midiNote.attack * (appConfig.style.note.maxHeight - appConfig.style.note.minHeight);
     const startY = endY - noteHeight;
-    this.gridCtx.fillStyle = noteConfig.color;
+    this.gridCtx.fillStyle = note.color;
 
     if (note.startTime >= this.canvasStartTime) {
       // Note is in between canvas start & indicator
@@ -209,7 +239,7 @@ class Grid {
   }
 
   // Draw rectangles by converting start & end time against canvas start time.
-  renderNoteTime(ctx, startTime, endTime, startY, endY) {
+  renderNoteTime(ctx: CanvasRenderingContext2D, startTime: number, endTime: number, startY: number, endY: number) {
     const startX = (startTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     const endX = (endTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
     const width = endX - startX;
@@ -264,7 +294,28 @@ class Grid {
 }
 
 class App {
-  constructor(grid, noteQueue, metronome) {
+  grid: Grid;
+  noteQ: NoteQueue;
+  inputs: WebMidi.MIDIInput[];
+  input: WebMidi.MIDIInput;
+  selectedInput: WebMidi.MIDIInput;
+  selectedChannel: number; // 0 means all
+  metronome: Metronome;
+  isPlaying: boolean;
+  noteLength: number; // 1/16 by default
+  uiDeviceSelectE: HTMLSelectElement;
+  uiChannelSelectE: HTMLSelectElement;
+  uiTempoE: HTMLInputElement;
+  metronomeSubE: HTMLSelectElement;
+  gridMeasuresE: HTMLSelectElement;
+  gridMeterE: HTMLSelectElement;
+  gridSubE: HTMLSelectElement;
+  noteLengthE: HTMLSelectElement;
+  keyDown: boolean; // Prevent multiple keydown events
+  volumeKnob: VolumeCanvas;
+  onMidiReadyCallback: () => void;
+
+  constructor(grid: Grid, noteQueue: NoteQueue, metronome: Metronome) {
     this.grid = grid;
     this.inputs;
     this.selectedInput;
@@ -275,14 +326,14 @@ class App {
     this.noteLength = 1/16;
 
     // UI stuff
-    this.uiDeviceSelectE = document.getElementById("deviceSelect");
-    this.uiChannelSelectE = document.getElementById("channelSelect");
-    this.uiTempoE = document.getElementById("tempo");
-    this.metronomeSubE = document.getElementById("metronomeSubdivision");
-    this.gridMeasuresE = document.getElementById("measures");
-    this.gridMeterE = document.getElementById("meter");
-    this.gridSubE = document.getElementById("gridSubdivision");
-    this.noteLengthE = document.getElementById("noteWidth");
+    this.uiDeviceSelectE = document.getElementById("deviceSelect") as HTMLSelectElement;
+    this.uiChannelSelectE = document.getElementById("channelSelect") as HTMLSelectElement;
+    this.uiTempoE = document.getElementById("tempo") as HTMLInputElement;
+    this.metronomeSubE = document.getElementById("metronomeSubdivision") as HTMLSelectElement;
+    this.gridMeasuresE = document.getElementById("measures") as HTMLSelectElement;
+    this.gridMeterE = document.getElementById("meter") as HTMLSelectElement;
+    this.gridSubE = document.getElementById("gridSubdivision") as HTMLSelectElement;
+    this.noteLengthE = document.getElementById("noteWidth") as HTMLSelectElement;
     this.keyDown = false;
 
     this.volumeKnob = new VolumeCanvas("volumeKnob");
@@ -328,7 +379,7 @@ class App {
     }
   }
 
-  appendDeviceOption(value, text) {
+  appendDeviceOption(value: number, text: string) {
     // Remove default device option.
     const defaultOptionE = this.uiDeviceSelectE.querySelector(`option[value="defaultOption"]`);
     if (defaultOptionE) {
@@ -336,14 +387,13 @@ class App {
     }
 
     const optionE = document.createElement("option");
-    optionE.value = value;
+    optionE.value = value.toString();
     optionE.text = text;
     this.uiDeviceSelectE.appendChild(optionE);
   }
 
-  selectDevice(index) {
+  selectDevice(index: number) {
     console.log(`Switching to device ${index}`);
-    checkNumber(index);
     for (let i = 0; i < this.uiDeviceSelectE.options.length; i++) {
       this.uiDeviceSelectE.options[i].selected = i === index;
     }
@@ -362,7 +412,7 @@ class App {
       // Make the note smaller (* 0.8) to reduce overlap.
       const msPerBeat = 60 * 1000 / this.getUiTempo();
       const noteLength = 0.8 * (4 * msPerBeat) * this.noteLength;
-      this.noteQ.add(e.note, e.timestamp, e.timestamp + noteLength);
+      this.noteQ.add(new Note(e.note, e.timestamp, e.timestamp + noteLength));
       // TODO: move this note to config.
       // When F#4 (floor tom rim) is triggered, play/pause.
       if (e.note.identifier === "F#4") {
@@ -412,8 +462,6 @@ class App {
   }
 
   setTempo(tempo) {
-    checkNumber(tempo);
-
     this.uiTempoE.value = tempo;
     const currentlyPlaying = this.isPlaying;
     if (currentlyPlaying) {

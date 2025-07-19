@@ -1,4 +1,24 @@
 class Metronome {
+  audioContext: AudioContext | null;
+  isPlaying: boolean;
+  startTime: number;
+  currentTwelveletNote: number;
+  tempo: number;
+  meter: number;
+  masterVolume: number;
+  previousMasterVolume: number;
+  accentVolume: number;
+  quarterVolume: number;
+  eighthVolume: number;
+  sixteenthVolume: number;
+  tripletVolume: number;
+  lookahead: number; // How frequently to call the metronome
+  scheduleAheadTime: number; // How far ahead to schedule the next note
+  nextNoteTime: number; // The next time a note should be played
+  metronomeNoteLength: number; // Length of each metronome note
+  notesInQueue: { note: number; time: number }[];
+  timerWorker: Worker | null;
+
   constructor() {
     this.audioContext = null;
     this.isPlaying = false;
@@ -100,13 +120,11 @@ class Metronome {
     this.timerWorker.postMessage("stop");
   }
 
-  setMeter(meter) {
-    checkNumber(meter);
+  setMeter(meter: number) {
     this.meter = meter;
   }
 
-  setSubdivision(sub) {
-    checkNumber(sub);
+  setSubdivision(sub: number) {
     this.quarterVolume = 0;
     this.eighthVolume = 0;
     this.tripletVolume = 0;
@@ -125,14 +143,13 @@ class Metronome {
     }
   }
 
-  setTempo(tempo) {
+  setTempo(tempo: number) {
     console.log(`Metronome setting tempo to ${tempo}`);
     this.tempo = tempo;
   }
 
-  setVolume(volume) {
-    checkNumber(volume);
-    checkState(0 <= volume <= 1.0, `Volume ${volume} must be betwen 0.0 and 1.0`);
+  setVolume(volume: number) {
+    checkState(0 <= volume && volume <= 1.0, `Volume ${volume} must be betwen 0.0 and 1.0`);
     this.masterVolume = volume;
   }
 

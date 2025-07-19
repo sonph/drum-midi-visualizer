@@ -1,12 +1,6 @@
-function checkState(bool, message) {
+function checkState(bool: boolean, message: string) {
   if (!bool) {
-    console.log(message);
-  }
-}
-
-function checkNumber(x) {
-  if (isNaN(x)) {
-    console.log(`'${typeof x} ${x}' is not a number or NaN`);
+    throw new Error(message);
   }
 }
 
@@ -14,21 +8,19 @@ function checkNumber(x) {
 // For now, since the number of notes is small, a list should be sufficient.
 // Notes are sorted in timestamp order. New notes should be appended at the end.
 class NoteQueue {
+  notesArr: Note[];
+  firstAvailableNoteIndex: number;
+
   constructor() {
     this.notesArr = [];
     this.firstAvailableNoteIndex = -1;
   }
 
-  add(note, startTime, endTime) {
+  add(note: Note) {
     if (this.notesArr.length === 0) {
       this.firstAvailableNoteIndex = 0;
     }
-    this.notesArr.push({
-      note: note, // https://webmidijs.org/api/classes/Note
-      startTime: startTime,
-      endTime: endTime,
-      visible: true
-    });
+    this.notesArr.push(note);
   }
 
   reset() {
@@ -92,11 +84,20 @@ for (const pieceName in appConfig.noteMapping) {
 }
 
 class Note {
-  constructor(note) {
+  midiNote: WebMidiNote;
+  piece: { notes: string[]; position: number; color: string } | undefined;
+  startTime: number;
+  endTime: number;
+  visible: boolean;
+
+  constructor(midiNote: WebMidiNote, startTime: number, endTime: number, visible: boolean = true) {
     // Event.Note
     // note.identifier consists of note name + optional accidental (#) + octave.
-    this.note = note;
-    this.piece = noteNameToPiece[note.identifier];
+    this.midiNote = midiNote;
+    this.piece = noteNameToPiece[midiNote.identifier];
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.visible = visible;
   }
 
   get bottomY() {
@@ -118,10 +119,37 @@ class Note {
   }
 }
 
+// https://webmidijs.org/api/classes/Note
+class WebMidiNote {
+  accidental: string;
+  attack: number;
+  duration: number;
+  identifier: string;
+  name: string;
+  octave: number;
+  rawAttack: number;
+  rawRelease: number;
+  release: number;
+}
+
 class VolumeCanvas {
-  constructor(id) {
+  id: string;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  centerX: number;
+  centerY: number;
+  min: number; // min radians
+  max: number; // max radians
+  currentRads: number; // current radians
+  mouseDown: boolean;
+  startX: number;
+  startY: number;
+  animationRef: number | undefined;
+  onVolumeChangeCallback: (volume: number) => void;
+
+  constructor(id: string) {
     this.id = id;
-    this.canvas = document.getElementById(id);
+    this.canvas = document.getElementById(id) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d");
 
     this.onVolumeChangeCallback;

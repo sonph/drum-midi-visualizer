@@ -1,4 +1,49 @@
-const appConfig = {
+interface AppConfig {
+  defaultTempo: number;
+  style: {
+    background: string;
+    grid: {
+      measure: {
+        width: number;
+        color: string;
+      };
+      beat: {
+        width: number;
+        color: string;
+      };
+      subdivision: {
+        width: number;
+        color: string;
+      };
+      indicator: {
+        width: number;
+        color: string;
+      };
+      spacing: number; // between vertical lines
+      paddingTop: number; // top padding for the grid
+    };
+    note: {
+      defaultColor: string;
+      minHeight: number; // minimum height of a note
+      maxHeight: number; // maximum height of a note based on velocity
+    };
+    lane: {
+      height: number; // height of each lane
+      bottomPadding: number; // padding at the bottom of each lane
+      oddLaneBackground: string; // background color for odd lanes
+      evenLaneBackground: string; // background color for even lanes
+    };
+  };
+  noteMapping: {
+    [key: string]: {
+      notes: string[]; // array of note names
+      position: number; // lane position for the note
+      color: string; // color for the note
+    };
+  };
+}
+
+const appConfig: AppConfig = {
   defaultTempo: 90,
   style: {
     background: "#333",
