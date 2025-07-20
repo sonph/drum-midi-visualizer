@@ -144,31 +144,35 @@ class Grid {
         this.gridCtx.fillStyle = note.color;
         if (note.startTime >= this.canvasStartTime) {
             // Note is in between canvas start & indicator
-            this.renderNoteTime(this.gridCtx, note.startTime, Math.min(note.endTime, currentTime), startY, endY);
+            this.renderNoteTime(note.startTime, Math.min(note.endTime, currentTime), startY, endY);
+            return;
         }
         else if (note.startTime < this.canvasStartTime && note.endTime <= this.canvasStartTime) {
             // Note is in between indicator & canvas end. Simplify by adding
             // canvasTotal time to the note, rendering like it is in the future.
-            this.renderNoteTime(this.gridCtx, Math.max(note.startTime + this.canvasTotalTime, currentTime), note.endTime + this.canvasTotalTime, startY, endY);
+            this.renderNoteTime(Math.max(note.startTime + this.canvasTotalTime, currentTime), note.endTime + this.canvasTotalTime, startY, endY);
         }
         else if (note.startTime < this.canvasStartTime && note.endTime > this.canvasStartTime) {
             // Note is split in between
-            this.renderNoteTime(this.gridCtx, Math.max(note.startTime + this.canvasTotalTime, currentTime), this.canvasEndTime, startY, endY);
-            this.renderNoteTime(this.gridCtx, this.canvasStartTime, currentTime < note.endTime ? Math.max(note.endTime, currentTime) : Math.min(note.endTime, currentTime), startY, endY);
+            this.renderNoteTime(Math.max(note.startTime + this.canvasTotalTime, currentTime), this.canvasEndTime, startY, endY);
+            this.renderNoteTime(this.canvasStartTime, currentTime < note.endTime ? Math.max(note.endTime, currentTime) : Math.min(note.endTime, currentTime), startY, endY);
         }
         else {
             throw new Error(`Unhandled case: note(${note.startTime}, ${note.endTime}) and canvas ${this.canvasStartTime}`);
         }
     }
     // Draw rectangles by converting start & end time against canvas start time.
-    renderNoteTime(ctx, startTime, endTime, startY, endY) {
+    renderNoteTime(startTime, endTime, startY, endY) {
         const startX = (startTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
         const endX = (endTime - this.canvasStartTime) / this.canvasTotalTime * this.cvWidth;
         const width = endX - startX;
         const height = endY - startY;
-        ctx.beginPath();
-        ctx.roundRect(startX, startY, width, height, [3]);
-        ctx.fill();
+        this.gridCtx.beginPath();
+        this.gridCtx.roundRect(startX, startY, width, height, [3]);
+        this.gridCtx.fill();
+        this.gridCtx.strokeStyle = "#333";
+        this.gridCtx.lineWidth = 1.5;
+        this.gridCtx.strokeRect(startX, startY, width, height);
     }
     drawIndicator(currentTime) {
         this.indicatorCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
