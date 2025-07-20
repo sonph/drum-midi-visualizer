@@ -133,7 +133,7 @@ class Metronome {
     init() {
         console.log("metronome init");
         this.audioContext = new AudioContext();
-        this.timerWorker = new Worker("worker.js");
+        this.timerWorker = new Worker("js/worker.js");
         this.timerWorker.onmessage = (e) => {
             if (e.data === "tick") {
                 this.scheduler();
