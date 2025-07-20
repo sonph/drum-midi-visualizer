@@ -177,7 +177,7 @@ class Grid {
     // TODO: Maybe optimize by checking if there are notes to hide first.
     this.gridCtx.clearRect(0, 0, this.cvWidth, this.cvHeight);
 
-    this.noteQ.removeNotesBeforeTime(currentTime, this.canvasTotalTime);
+    this.noteQ.removeNotesBeforeTime(currentTime - this.canvasTotalTime);
     this.noteQ.notes.forEach(note => this.renderNote(note, currentTime));
   }
 
@@ -369,6 +369,9 @@ class App {
   showDeviceOptions() {
     console.log(`Found ${WebMidi.inputs.length} MIDI devices`);
     if (WebMidi.inputs.length === 0) {
+      if (this.isPlaying) {
+        this.toggle();
+      }
       this.uiChannelSelectE.innerHTML = '<option value="defaultOption">&lt;Select an Input device&gt;</option>';
       return;
     }

@@ -80,4 +80,7 @@ const appConfig = {
         },
     }
 };
+if (typeof global !== 'undefined') {
+    global.appConfig = appConfig;
+}
 //# sourceMappingURL=config.js.map

@@ -9,6 +9,8 @@ function checkState(bool: boolean, message: string) {
 // Notes are sorted in timestamp order. New notes should be appended at the end.
 class NoteQueue {
   notesArr: Note[];
+  // Ignore notes before this index. Modifying the array can be expensive, so
+  // we periodically trim the array.
   firstAvailableNoteIndex: number;
 
   constructor() {
@@ -42,14 +44,13 @@ class NoteQueue {
     return this.notesArr.slice(this.firstAvailableNoteIndex);
   }
 
-  removeNotesBeforeTime(currentTime, canvasTotalTime) {
+  removeNotesBeforeTime(horizon: number) {
     // Internally, hide notes first. Once they've accumulated above a certain
     // threshold, copy the new notes to a new list.
     if (this.isEmpty()) {
       return;
     }
 
-    const horizon = currentTime - canvasTotalTime;
     for (let i = this.firstAvailableNoteIndex; i < this.notesArr.length; i++) {
       const note = this.notesArr[i];
       if (note.visible && note.endTime <= horizon) {
@@ -204,7 +205,7 @@ class VolumeCanvas {
     this.draw();
   }
 
-  handlePointerPosition(clientX, clientY) {
+  handlePointerPosition(clientX: number, clientY: number) {
     const xDiff = clientX - this.startX;
     const yDiff = clientY - this.startY;
     var rads = Math.atan2(yDiff, xDiff);
@@ -271,4 +272,12 @@ class Utils {
     }
     return maxPosition;
   }
+}
+ 
+if (typeof global !== 'undefined') {
+  global.NoteQueue = NoteQueue;
+  global.Note = Note;
+  global.WebMidiNote = WebMidiNote;
+  global.VolumeCanvas = VolumeCanvas;
+  global.Utils = Utils;
 }

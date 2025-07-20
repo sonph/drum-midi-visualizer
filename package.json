@@ -1,0 +1,27 @@
+{
+  "name": "drum-midi-visualizer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonph/drum-midi-visualizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sonph/drum-midi-visualizer/issues"
+  },
+  "homepage": "https://github.com/sonph/drum-midi-visualizer#readme",
+  "devDependencies": {
+    "jest": "^30.0.3",
+    "jest-environment-jsdom": "^30.0.2"
+  },
+  "dependencies": {
+  }
+}

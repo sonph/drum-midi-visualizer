@@ -33,13 +33,12 @@ class NoteQueue {
         }
         return this.notesArr.slice(this.firstAvailableNoteIndex);
     }
-    removeNotesBeforeTime(currentTime, canvasTotalTime) {
+    removeNotesBeforeTime(horizon) {
         // Internally, hide notes first. Once they've accumulated above a certain
         // threshold, copy the new notes to a new list.
         if (this.isEmpty()) {
             return;
         }
-        const horizon = currentTime - canvasTotalTime;
         for (let i = this.firstAvailableNoteIndex; i < this.notesArr.length; i++) {
             const note = this.notesArr[i];
             if (note.visible && note.endTime <= horizon) {
@@ -212,5 +211,12 @@ class Utils {
         }
         return maxPosition;
     }
+}
+if (typeof global !== 'undefined') {
+    global.NoteQueue = NoteQueue;
+    global.Note = Note;
+    global.WebMidiNote = WebMidiNote;
+    global.VolumeCanvas = VolumeCanvas;
+    global.Utils = Utils;
 }
 //# sourceMappingURL=utils.js.map

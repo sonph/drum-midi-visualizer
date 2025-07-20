@@ -125,3 +125,7 @@ const appConfig: AppConfig = {
     },
   }
 }
+
+if (typeof global !== 'undefined') {
+  global.appConfig = appConfig;
+}
