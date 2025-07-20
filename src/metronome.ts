@@ -63,9 +63,12 @@ class Metronome {
 
     const osc = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
+    const panning = this.audioContext.createStereoPanner();
+    panning.pan.value = 0.7;
 
     osc.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
+    gainNode.connect(panning);
+    panning.connect(this.audioContext.destination);
 
     if (beatNumber % this.maxBeats() === 0) {
       if (this.accentVolume > 0.25) {

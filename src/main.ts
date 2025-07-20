@@ -30,7 +30,7 @@ class Grid {
     this.noteQ = noteQueue;
 
     this.meter = 4;
-    this.subdivision = 4;
+    this.subdivision = 8;
     this.measures = 2;
 
     this.tempo;
@@ -165,7 +165,7 @@ class Grid {
   animate(currentTime: DOMHighResTimeStamp) {
     // currentTime: DOMHighResTimeStamp in ms
     // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#parameters
-    this.calculateCanvasStartEndTime(false);
+    this.calculateCanvasStartEndTime();
 
     if (this.showIndicator) {
       this.drawIndicator(currentTime);
@@ -252,7 +252,7 @@ class Grid {
     this.indicatorCtx.stroke();
   }
 
-  calculateCanvasStartEndTime(init: true | undefined) {
+  calculateCanvasStartEndTime(init: boolean = false) {
     if (init) {
       this.canvasStartTime = performance.now();
       return;
@@ -545,6 +545,7 @@ class App {
       if (this.keyDown) {
         return;
       }
+      event.preventDefault();
       this.keyDown = true;
       if (event.code === "Space" || event.key === " ") {
         console.log("Space key pressed!");
